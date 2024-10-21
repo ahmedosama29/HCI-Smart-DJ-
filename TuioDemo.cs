@@ -26,371 +26,412 @@ using TUIO;
 using System.IO;
 using System.Drawing.Drawing2D;
 using NAudio.Wave;
-public class TuioDemo : Form , TuioListener
-	{
-		private TuioClient client;
-		private Dictionary<long,TuioObject> objectList;
-		private Dictionary<long,TuioCursor> cursorList;
-		private Dictionary<long,TuioBlob> blobList;
+public class TuioDemo : Form, TuioListener
+{
+    private TuioClient client;
+    private int[] Music = new int[200];
 
-	private WaveOutEvent outputDevice = null; // Explicitly declare the type
-	private AudioFileReader audioFile = null; // Explicitly declare the type
+    private Dictionary<long, TuioObject> objectList;
+    private Dictionary<long, TuioCursor> cursorList;
+    private Dictionary<long, TuioBlob> blobList;
 
-	public static int width, height;
-		private int window_width =  640;
-		private int window_height = 480;
-		private int window_left = 0;
-		private int window_top = 0;
-		private int screen_width = Screen.PrimaryScreen.Bounds.Width;
-		private int screen_height = Screen.PrimaryScreen.Bounds.Height;
+    
 
-		private bool fullscreen;
-		private bool verbose;
+    private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
+    private AudioFileReader audioFile = null; // Explicitly declare the type
 
-		Font font = new Font("Arial", 10.0f);
-		SolidBrush fntBrush = new SolidBrush(Color.White);
-		SolidBrush bgrBrush = new SolidBrush(Color.FromArgb(0,0,64));
-		SolidBrush curBrush = new SolidBrush(Color.FromArgb(192, 0, 192));
-		SolidBrush objBrush = new SolidBrush(Color.FromArgb(64, 0, 0));
-		SolidBrush blbBrush = new SolidBrush(Color.FromArgb(64, 64, 64));
-		Pen curPen = new Pen(new SolidBrush(Color.Blue), 1);
+    public static int width, height;
+    private int window_width = 640;
+    private int window_height = 480;
+    private int window_left = 0;
+    private int window_top = 0;
+    private int screen_width = Screen.PrimaryScreen.Bounds.Width;
+    private int screen_height = Screen.PrimaryScreen.Bounds.Height;
 
-		public TuioDemo(int port) {
-		
-			verbose = false;
-			fullscreen = false;
-			width = window_width;
-			height = window_height;
+    private bool fullscreen;
+    private bool verbose;
 
-			this.ClientSize = new System.Drawing.Size(width, height);
-			this.Name = "TuioDemo";
-			this.Text = "TuioDemo";
-			
-			this.Closing+=new CancelEventHandler(Form_Closing);
-			this.KeyDown+=new KeyEventHandler(Form_KeyDown);
+    Font font = new Font("Arial", 10.0f);
+    SolidBrush fntBrush = new SolidBrush(Color.White);
+    SolidBrush bgrBrush = new SolidBrush(Color.FromArgb(0, 0, 64));
+    SolidBrush curBrush = new SolidBrush(Color.FromArgb(192, 0, 192));
+    SolidBrush objBrush = new SolidBrush(Color.FromArgb(64, 0, 0));
+    SolidBrush blbBrush = new SolidBrush(Color.FromArgb(64, 64, 64));
+    Pen curPen = new Pen(new SolidBrush(Color.Blue), 1);
 
-			this.SetStyle( ControlStyles.AllPaintingInWmPaint |
-							ControlStyles.UserPaint |
-							ControlStyles.DoubleBuffer, true);
+    public TuioDemo(int port)
+    {
 
-			objectList = new Dictionary<long,TuioObject>(128);
-			cursorList = new Dictionary<long,TuioCursor>(128);
-			blobList   = new Dictionary<long,TuioBlob>(128);
-			
-			client = new TuioClient(port);
-			client.addTuioListener(this);
+        verbose = false;
+        fullscreen = false;
+        width = window_width;
+        height = window_height;
 
-			client.connect();
-		}
+        this.ClientSize = new System.Drawing.Size(width, height);
+        this.Name = "TuioDemo";
+        this.Text = "TuioDemo";
 
-		private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e) {
+        this.Closing += new CancelEventHandler(Form_Closing);
+        this.KeyDown += new KeyEventHandler(Form_KeyDown);
 
- 			if ( e.KeyData == Keys.F1) {
-	 			if (fullscreen == false) {
+        this.SetStyle(ControlStyles.AllPaintingInWmPaint |
+                        ControlStyles.UserPaint |
+                        ControlStyles.DoubleBuffer, true);
 
-					width = screen_width;
-					height = screen_height;
+        objectList = new Dictionary<long, TuioObject>(128);
+        cursorList = new Dictionary<long, TuioCursor>(128);
+        blobList = new Dictionary<long, TuioBlob>(128);
 
-					window_left = this.Left;
-					window_top = this.Top;
+        client = new TuioClient(port);
+        client.addTuioListener(this);
 
-					this.FormBorderStyle = FormBorderStyle.None;
-		 			this.Left = 0;
-		 			this.Top = 0;
-		 			this.Width = screen_width;
-		 			this.Height = screen_height;
+        client.connect();
+    }
 
-		 			fullscreen = true;
-	 			} else {
+    private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+    {
 
-					width = window_width;
-					height = window_height;
+        if (e.KeyData == Keys.F1)
+        {
+            if (fullscreen == false)
+            {
 
-		 			this.FormBorderStyle = FormBorderStyle.Sizable;
-		 			this.Left = window_left;
-		 			this.Top = window_top;
-		 			this.Width = window_width;
-		 			this.Height = window_height;
+                width = screen_width;
+                height = screen_height;
 
-		 			fullscreen = false;
-	 			}
- 			} else if ( e.KeyData == Keys.Escape) {
-				this.Close();
+                window_left = this.Left;
+                window_top = this.Top;
 
- 			} else if ( e.KeyData == Keys.V ) {
- 				verbose=!verbose;
- 			}
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.Left = 0;
+                this.Top = 0;
+                this.Width = screen_width;
+                this.Height = screen_height;
 
- 		}
+                fullscreen = true;
+            }
+            else
+            {
 
-		private void Form_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-		{
-			client.removeTuioListener(this);
+                width = window_width;
+                height = window_height;
 
-			client.disconnect();
-			System.Environment.Exit(0);
-		}
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+                this.Left = window_left;
+                this.Top = window_top;
+                this.Width = window_width;
+                this.Height = window_height;
 
-		public void addTuioObject(TuioObject o) {
-			lock(objectList) {
-				objectList.Add(o.SessionID,o);
-			} if (verbose) Console.WriteLine("add obj "+o.SymbolID+" ("+o.SessionID+") "+o.X+" "+o.Y+" "+o.Angle);
-		}
+                fullscreen = false;
+            }
+        }
+        else if (e.KeyData == Keys.Escape)
+        {
+            this.Close();
 
-		public void updateTuioObject(TuioObject o) {
+        }
+        else if (e.KeyData == Keys.V)
+        {
+            verbose = !verbose;
+        }
 
-			if (verbose) Console.WriteLine("set obj "+o.SymbolID+" "+o.SessionID+" "+o.X+" "+o.Y+" "+o.Angle+" "+o.MotionSpeed+" "+o.RotationSpeed+" "+o.MotionAccel+" "+o.RotationAccel);
-		}
+    }
 
-		public void removeTuioObject(TuioObject o)
-		{
-			outputDevice.Stop();
-			lock (objectList)
-			{
-				objectList.Remove(o.SessionID);
-			}
-			if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
-		}
+    private void Form_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        client.removeTuioListener(this);
 
-		public void addTuioCursor(TuioCursor c) {
-			lock(cursorList) {
-				cursorList.Add(c.SessionID,c);
-			}
-			if (verbose) Console.WriteLine("add cur "+c.CursorID + " ("+c.SessionID+") "+c.X+" "+c.Y);
-		}
+        client.disconnect();
+        System.Environment.Exit(0);
+    }
 
-		public void updateTuioCursor(TuioCursor c) {
-			if (verbose) Console.WriteLine("set cur "+c.CursorID + " ("+c.SessionID+") "+c.X+" "+c.Y+" "+c.MotionSpeed+" "+c.MotionAccel);
-		}
+    public void addTuioObject(TuioObject o)
+    {
+        lock (objectList)
+        {
+            objectList.Add(o.SessionID, o);
+            
+        }
+        if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
+    }
 
-		public void removeTuioCursor(TuioCursor c) {
-			lock(cursorList) {
-				cursorList.Remove(c.SessionID);
-			}
-			if (verbose) Console.WriteLine("del cur "+c.CursorID + " ("+c.SessionID+")");
- 		}
+    public void updateTuioObject(TuioObject o)
+    {
 
-		public void addTuioBlob(TuioBlob b) {
-			lock(blobList) {
-				blobList.Add(b.SessionID,b);
-			}
-			if (verbose) Console.WriteLine("add blb "+b.BlobID + " ("+b.SessionID+") "+b.X+" "+b.Y+" "+b.Angle+" "+b.Width+" "+b.Height+" "+b.Area);
-		}
+        if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+    }
 
-		public void updateTuioBlob(TuioBlob b) {
-		
-			if (verbose) Console.WriteLine("set blb "+b.BlobID + " ("+b.SessionID+") "+b.X+" "+b.Y+" "+b.Angle+" "+b.Width+" "+b.Height+" "+b.Area+" "+b.MotionSpeed+" "+b.RotationSpeed+" "+b.MotionAccel+" "+b.RotationAccel);
-		}
+    public void removeTuioObject(TuioObject o)
 
-		public void removeTuioBlob(TuioBlob b) {
-			lock(blobList) {
-				blobList.Remove(b.SessionID);
-			}
-			if (verbose) Console.WriteLine("del blb "+b.BlobID + " ("+b.SessionID+")");
-		}
 
-		public void refresh(TuioTime frameTime) {
-			Invalidate();
-		}
+    {
+        foreach (TuioObject tobj in objectList.Values)
+        {
+            if (Music[tobj.SessionID] == 1)
+            {
+                outputDevices[tobj.SessionID].Stop();
+                break;
+            }
+            else
+            {
+                Console.WriteLine("NO music in" + tobj.SessionID.ToString() + "___________");
+            }
+        }
 
-		protected override void OnPaintBackground(PaintEventArgs pevent)
-		{
-			// Getting the graphics object
-			Graphics g = pevent.Graphics;
-			g.FillRectangle(bgrBrush, new Rectangle(0,0,width,height));
-
-			// draw the cursor path
-			if (cursorList.Count > 0) {
- 			 lock(cursorList) {
-			 foreach (TuioCursor tcur in cursorList.Values) {
-					List<TuioPoint> path = tcur.Path;
-					TuioPoint current_point = path[0];
-
-					for (int i = 0; i < path.Count; i++) {
-						TuioPoint next_point = path[i];
-						g.DrawLine(curPen, current_point.getScreenX(width), current_point.getScreenY(height), next_point.getScreenX(width), next_point.getScreenY(height));
-						current_point = next_point;
-					}
-					g.FillEllipse(curBrush, current_point.getScreenX(width) - height / 100, current_point.getScreenY(height) - height / 100, height / 50, height / 50);
-					g.DrawString(tcur.CursorID + "", font, fntBrush, new PointF(tcur.getScreenX(width) - 10, tcur.getScreenY(height) - 10));
-				}
-			}
-		 }
-
-		// draw the objects
-		string objectImagePath;
-		string backgroundImagePath;
+        lock (objectList)
+        {
+            objectList.Remove(o.SessionID);
+        }
         
-			if (objectList.Count > 0) {
- 				lock(objectList) {
-					foreach (TuioObject tobj in objectList.Values) {
-						int ox = tobj.getScreenX(width);
-						int oy = tobj.getScreenY(height);
-						int size = height / 10;
 
-					switch (tobj.SymbolID)
-					{
-						case 1:
-							objectImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							var audioFilePath = "04._Ana_Mosh_Anany.mp3";  // Assuming the file is named 'song.mp3' and placed in bin
+        if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
+    }
 
-							// Create a new instance of the audio file reader
-							using (var audioFile = new AudioFileReader(audioFilePath))
-							using (outputDevice = new WaveOutEvent())
-							{
-								outputDevice.Init(audioFile);
-								outputDevice.Play();
+    public void addTuioCursor(TuioCursor c)
+    {
+        lock (cursorList)
+        {
+            cursorList.Add(c.SessionID, c);
+        }
+        if (verbose) Console.WriteLine("add cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y);
+    }
 
-								Console.WriteLine("Playing audio...");
+    public void updateTuioCursor(TuioCursor c)
+    {
+        if (verbose) Console.WriteLine("set cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y + " " + c.MotionSpeed + " " + c.MotionAccel);
+    }
 
-								// Keep the program running until the audio finishes playing
-								while (outputDevice.PlaybackState == PlaybackState.Playing)
-								{
-									System.Threading.Thread.Sleep(1000);
-								}
-								
-							}
-							break;
-						case 2:
-							objectImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							audioFilePath = "03._Enta_Eh.mp3";  // Assuming the file is named 'song.mp3' and placed in bin
+    public void removeTuioCursor(TuioCursor c)
+    {
+        lock (cursorList)
+        {
+            cursorList.Remove(c.SessionID);
+        }
+        if (verbose) Console.WriteLine("del cur " + c.CursorID + " (" + c.SessionID + ")");
+    }
 
-							// Create a new instance of the audio file reader
-							using (var audioFile = new AudioFileReader(audioFilePath))
-							using (outputDevice = new WaveOutEvent())
-							{
-								outputDevice.Init(audioFile);
-								outputDevice.Play();
+    public void addTuioBlob(TuioBlob b)
+    {
+        lock (blobList)
+        {
+            blobList.Add(b.SessionID, b);
+        }
+        if (verbose) Console.WriteLine("add blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area);
+    }
 
-								Console.WriteLine("Playing audio...");
+    public void updateTuioBlob(TuioBlob b)
+    {
 
-								// Keep the program running until the audio finishes playing
-								while (outputDevice.PlaybackState == PlaybackState.Playing)
-								{
-									System.Threading.Thread.Sleep(1000);
-								}
+        if (verbose) Console.WriteLine("set blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area + " " + b.MotionSpeed + " " + b.RotationSpeed + " " + b.MotionAccel + " " + b.RotationAccel);
+    }
 
-							}
-							break;
-						case 0:
-							objectImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "pic2.jpg");
-							audioFilePath = "03.Ashouf Feek Youm.mp3";  // Assuming the file is named 'song.mp3' and placed in bin
+    public void removeTuioBlob(TuioBlob b)
+    {
+        lock (blobList)
+        {
+            blobList.Remove(b.SessionID);
+        }
+        if (verbose) Console.WriteLine("del blb " + b.BlobID + " (" + b.SessionID + ")");
+    }
 
-							// Create a new instance of the audio file reader
-							using (var audioFile = new AudioFileReader(audioFilePath))
-							using (outputDevice = new WaveOutEvent())
-							{
-								outputDevice.Init(audioFile);
-								outputDevice.Play();
+    public void refresh(TuioTime frameTime)
+    {
+        Invalidate();
+    }
 
-								Console.WriteLine("Playing audio...");
+    protected override void OnPaintBackground(PaintEventArgs pevent)
+    {
+        // Getting the graphics object
+        Graphics g = pevent.Graphics;
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
 
-								// Keep the program running until the audio finishes playing
-								while (outputDevice.PlaybackState == PlaybackState.Playing)
-								{
-									System.Threading.Thread.Sleep(1000);
-								}
+        // draw the cursor path
+        if (cursorList.Count > 0)
+        {
+            lock (cursorList)
+            {
+                foreach (TuioCursor tcur in cursorList.Values)
+                {
+                    List<TuioPoint> path = tcur.Path;
+                    TuioPoint current_point = path[0];
 
-							}
-							break;
-						default:
-							// Use default rectangle for other IDs
-							g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-							g.DrawString(tobj.SymbolID + "", font, fntBrush, new PointF(ox - 10, oy - 10));
-							
-							continue;
-					}
-
-					try
-					{
-						// Draw background image without rotation
-						if (File.Exists(backgroundImagePath))
-						{
-							using (Image bgImage = Image.FromFile(backgroundImagePath))
-							{
-								g.DrawImage(bgImage, new Rectangle(new Point(0, 0), new Size(width, height)));
-							}
-						}
-						else
-						{
-							Console.WriteLine($"Background image not found: {backgroundImagePath}");
-						}
-
-						// Draw object image with rotation
-						if (File.Exists(objectImagePath))
-						{
-							using (Image objectImage = Image.FromFile(objectImagePath))
-							{
-								// Save the current state of the graphics object
-								GraphicsState state = g.Save();
-
-								// Apply transformations for rotation
-								g.TranslateTransform(ox, oy);
-								g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
-								g.TranslateTransform(-ox, -oy);
-
-								// Draw the rotated object
-								g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-
-								// Restore the graphics state
-								g.Restore(state);
-							}
-						}
-						else
-						{
-							Console.WriteLine($"Object image not found: {objectImagePath}");
-							// Fall back to drawing a rectangle
-							//g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-						}
-					}
-					catch
+                    for (int i = 0; i < path.Count; i++)
                     {
-						Console.WriteLine("alooooo");
+                        TuioPoint next_point = path[i];
+                        g.DrawLine(curPen, current_point.getScreenX(width), current_point.getScreenY(height), next_point.getScreenX(width), next_point.getScreenY(height));
+                        current_point = next_point;
+                    }
+                    g.FillEllipse(curBrush, current_point.getScreenX(width) - height / 100, current_point.getScreenY(height) - height / 100, height / 50, height / 50);
+                    g.DrawString(tcur.CursorID + "", font, fntBrush, new PointF(tcur.getScreenX(width) - 10, tcur.getScreenY(height) - 10));
+                }
+            }
+        }
+
+        // draw the objects
+        string objectImagePath;
+        string backgroundImagePath;
+        string audioFilePath;
+
+        if (objectList.Count > 0)
+        {
+            lock (objectList)
+            {
+                foreach (TuioObject tobj in objectList.Values)
+                {
+                    int ox = tobj.getScreenX(width);
+                    int oy = tobj.getScreenY(height);
+                    int size = height / 10;
+
+                    switch (tobj.SymbolID)
+                    {
+                        case 1:
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
+
+
+
+                            break;
+                        case 2:
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            ///Music[tobj.SymbolID] = 1;
+                            audioFilePath = "04._Ana_Mosh_Anany.mp3";  
+                            using (var audioFile = new AudioFileReader(audioFilePath))
+                            using (outputDevices[tobj.SessionID] = new WaveOutEvent())
+                            {
+                                outputDevices[tobj.SessionID].Init(audioFile);
+                                outputDevices[tobj.SessionID].Play();
+                                Music[tobj.SessionID] = 1;
+
+                                Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() +"___________");
+
+                                // Keep the program running until the audio finishes playing
+                                while (outputDevices[tobj.SessionID].PlaybackState == PlaybackState.Playing)
+                                {
+                                    System.Threading.Thread.Sleep(1000);
+                                }
+
+                            }
+
+                            break;
+                        case 0:
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+
+  
+                            break;
+                        default:
+                            // Use default rectangle for other IDs
+                            g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                            g.DrawString(tobj.SymbolID + "", font, fntBrush, new PointF(ox - 10, oy - 10));
+
+                            continue;
+                    }
+
+                    try
+                    {
+                        // Draw background image without rotation
+                        if (File.Exists(backgroundImagePath))
+                        {
+                            using (Image bgImage = Image.FromFile(backgroundImagePath))
+                            {
+                                if (tobj.SymbolID == 1)
+                                {
+                                    g.DrawImage(bgImage, new Rectangle(0, 0, width / 2, height));
+
+                                }
+                                else if (tobj.SymbolID == 0)
+                                {
+                                    g.DrawImage(bgImage, new Rectangle(width / 2, 0, width / 2, height));
+                                }
+                                // Draw the rotated object
+                                else
+                                {
+                                    g.DrawImage(bgImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Background image not found: {backgroundImagePath}");
+                        }
+
+                        // Draw object image with rotation
+                        if (File.Exists(objectImagePath))
+                        {
+                            using (Image objectImage = Image.FromFile(objectImagePath))
+                            {
+                                // Save the current state of the graphics object
+                                GraphicsState state = g.Save();
+
+                                // Apply transformations for rotation
+                                g.TranslateTransform(ox, oy);
+                                g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                                g.TranslateTransform(-ox, -oy);
+
+                                // Draw the rotated object
+                                g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+
+                                // Restore the graphics state
+                                g.Restore(state);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Object image not found: {objectImagePath}");
+                            // Fall back to drawing a rectangle
+                            //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("alooooo");
                     }
 
 
-					}
-				}
-			}
+                }
+            }
+        }
 
-			// draw the blobs
-			if (blobList.Count > 0) {
-				lock(blobList) {
-					foreach (TuioBlob tblb in blobList.Values) {
-						int bx = tblb.getScreenX(width);
-						int by = tblb.getScreenY(height);
-						float bw = tblb.Width*width;
-						float bh = tblb.Height*height;
+        // draw the blobs
+        if (blobList.Count > 0)
+        {
+            lock (blobList)
+            {
+                foreach (TuioBlob tblb in blobList.Values)
+                {
+                    int bx = tblb.getScreenX(width);
+                    int by = tblb.getScreenY(height);
+                    float bw = tblb.Width * width;
+                    float bh = tblb.Height * height;
 
-						g.TranslateTransform(bx, by);
-						g.RotateTransform((float)(tblb.Angle / Math.PI * 180.0f));
-						g.TranslateTransform(-bx, -by);
+                    g.TranslateTransform(bx, by);
+                    g.RotateTransform((float)(tblb.Angle / Math.PI * 180.0f));
+                    g.TranslateTransform(-bx, -by);
 
-						g.FillEllipse(blbBrush, bx - bw / 2, by - bh / 2, bw, bh);
+                    g.FillEllipse(blbBrush, bx - bw / 2, by - bh / 2, bw, bh);
 
-						g.TranslateTransform(bx, by);
-						g.RotateTransform(-1 * (float)(tblb.Angle / Math.PI * 180.0f));
-						g.TranslateTransform(-bx, -by);
-						
-						g.DrawString(tblb.BlobID + "", font, fntBrush, new PointF(bx, by));
-					}
-				}
-			}
-		}
+                    g.TranslateTransform(bx, by);
+                    g.RotateTransform(-1 * (float)(tblb.Angle / Math.PI * 180.0f));
+                    g.TranslateTransform(-bx, -by);
+
+                    g.DrawString(tblb.BlobID + "", font, fntBrush, new PointF(bx, by));
+                }
+            }
+        }
+    }
 
     private void InitializeComponent()
     {
-            this.SuspendLayout();
-            // 
-            // TuioDemo
-            // 
-            this.ClientSize = new System.Drawing.Size(278, 244);
-            this.Name = "TuioDemo";
-            this.Load += new System.EventHandler(this.TuioDemo_Load);
-            this.ResumeLayout(false);
+        this.SuspendLayout();
+        // 
+        // TuioDemo
+        // 
+        this.ClientSize = new System.Drawing.Size(278, 244);
+        this.Name = "TuioDemo";
+        this.Load += new System.EventHandler(this.TuioDemo_Load);
+        this.ResumeLayout(false);
 
     }
 
@@ -399,23 +440,25 @@ public class TuioDemo : Form , TuioListener
 
     }
 
-    public static void Main(String[] argv) {
-	 		int port = 0;
-			switch (argv.Length) {
-				case 1:
-					port = int.Parse(argv[0],null);
-					if(port==0) goto default;
-					break;
-				case 0:
-					port = 3333;
-					break;
-				default:
-					Console.WriteLine("usage: mono TuioDemo [port]");
-					System.Environment.Exit(0);
-					break;
-			}
-			
-			TuioDemo app = new TuioDemo(port);
-			Application.Run(app);
-		}
-	}
+    public static void Main(String[] argv)
+    {
+        int port = 0;
+        switch (argv.Length)
+        {
+            case 1:
+                port = int.Parse(argv[0], null);
+                if (port == 0) goto default;
+                break;
+            case 0:
+                port = 3333;
+                break;
+            default:
+                Console.WriteLine("usage: mono TuioDemo [port]");
+                System.Environment.Exit(0);
+                break;
+        }
+
+        TuioDemo app = new TuioDemo(port);
+        Application.Run(app);
+    }
+}
