@@ -35,7 +35,7 @@ public class TuioDemo : Form, TuioListener
     private Dictionary<long, TuioCursor> cursorList;
     private Dictionary<long, TuioBlob> blobList;
 
-    
+    private string[] profiles = new string[3] { "Profile 1", "Profile2", "Profile 3" };
 
     private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
     private AudioFileReader audioFile = null; // Explicitly declare the type
@@ -50,6 +50,7 @@ public class TuioDemo : Form, TuioListener
 
     private bool fullscreen;
     private bool verbose;
+    private string folderName;
 
     Font font = new Font("Arial", 10.0f);
     SolidBrush fntBrush = new SolidBrush(Color.White);
@@ -73,7 +74,6 @@ public class TuioDemo : Form, TuioListener
 
         this.Closing += new CancelEventHandler(Form_Closing);
         this.KeyDown += new KeyEventHandler(Form_KeyDown);
-
         this.SetStyle(ControlStyles.AllPaintingInWmPaint |
                         ControlStyles.UserPaint |
                         ControlStyles.DoubleBuffer, true);
@@ -86,6 +86,17 @@ public class TuioDemo : Form, TuioListener
         client.addTuioListener(this);
 
         client.connect();
+    }
+
+    private void TuioDemo_Paint(object sender, PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+        string text = "Welcome" + folderName;
+        Font fonttext = new Font("Arial", 18);
+        Brush textBrush = Brushes.White;
+        int textY = this.ClientSize.Height / 2;
+        int textX = this.ClientSize.Width / 2 - 100;
+        g.DrawString(text, fonttext, textBrush, new PointF(textX, textY));
     }
 
     private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -147,18 +158,29 @@ public class TuioDemo : Form, TuioListener
 
     public void addTuioObject(TuioObject o)
     {
+        Console.WriteLine("TUIO marker detected: " + o.SymbolID);
         lock (objectList)
         {
             objectList.Add(o.SessionID, o);
-            
+
         }
         if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
+        
     }
 
     public void updateTuioObject(TuioObject o)
     {
 
         if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+        float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
+        volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
+
+        // Set the volume for the audio output
+        if (outputDevices[o.SessionID] != null)
+        {
+            outputDevices[o.SessionID].Volume = volume;  // Adjust volume directly
+            Console.WriteLine("Volume set to: " + volume);
+        }
     }
 
     public void removeTuioObject(TuioObject o)
@@ -167,14 +189,14 @@ public class TuioDemo : Form, TuioListener
     {
         foreach (TuioObject tobj in objectList.Values)
         {
-            if (Music[tobj.SessionID] == 1)
+            if (Music[tobj.SessionID] == 1 && outputDevices[tobj.SessionID] != null)
             {
                 outputDevices[tobj.SessionID].Stop();
                 break;
             }
             else
             {
-                Console.WriteLine("NO music in" + tobj.SessionID.ToString() + "___________");
+                Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "___________");
             }
         }
 
@@ -182,7 +204,7 @@ public class TuioDemo : Form, TuioListener
         {
             objectList.Remove(o.SessionID);
         }
-        
+
 
         if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
     }
@@ -239,6 +261,8 @@ public class TuioDemo : Form, TuioListener
         Invalidate();
     }
 
+
+
     protected override void OnPaintBackground(PaintEventArgs pevent)
     {
         // Getting the graphics object
@@ -271,7 +295,7 @@ public class TuioDemo : Form, TuioListener
         string objectImagePath;
         string backgroundImagePath;
         string audioFilePath;
-
+        string Profilename;
         if (objectList.Count > 0)
         {
             lock (objectList)
@@ -288,38 +312,42 @@ public class TuioDemo : Form, TuioListener
                             objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
+                            PlayProfileAudio(tobj.SymbolID);
 
 
 
                             break;
                         case 2:
-                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+
                             ///Music[tobj.SymbolID] = 1;
-                            audioFilePath = "04._Ana_Mosh_Anany.mp3";  
+                            audioFilePath = "04._Ana_Mosh_Anany.mp3";
                             using (var audioFile = new AudioFileReader(audioFilePath))
                             using (outputDevices[tobj.SessionID] = new WaveOutEvent())
                             {
                                 outputDevices[tobj.SessionID].Init(audioFile);
                                 outputDevices[tobj.SessionID].Play();
+                                //outputDevices[tobj.SymbolID].Volume=vol;
                                 Music[tobj.SessionID] = 1;
 
-                                Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() +"___________");
+                                Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
 
                                 // Keep the program running until the audio finishes playing
                                 while (outputDevices[tobj.SessionID].PlaybackState == PlaybackState.Playing)
                                 {
-                                    System.Threading.Thread.Sleep(1000);
+                                    //System.Threading.Thread.Sleep(100);
                                 }
 
                             }
 
                             break;
                         case 0:
-                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            
 
-  
+
                             break;
                         default:
                             // Use default rectangle for other IDs
@@ -328,6 +356,10 @@ public class TuioDemo : Form, TuioListener
 
                             continue;
                     }
+
+                    // Debugging the image paths
+                    Console.WriteLine($"Object Image Path: {objectImagePath}");
+                    Console.WriteLine($"Background Image Path: {backgroundImagePath}");
 
                     try
                     {
@@ -394,6 +426,8 @@ public class TuioDemo : Form, TuioListener
             }
         }
 
+
+
         // draw the blobs
         if (blobList.Count > 0)
         {
@@ -421,6 +455,43 @@ public class TuioDemo : Form, TuioListener
             }
         }
     }
+
+    private void PlayProfileAudio(long sessionID)
+    {
+        string profileFolder = Path.Combine(Environment.CurrentDirectory, "Profile " + sessionID.ToString());
+        Console.WriteLine("Profile Folder: " + profileFolder);
+
+        folderName = Path.GetFileName(profileFolder);
+        Console.WriteLine("Folder Name: " + folderName);
+
+
+        if (Directory.Exists(profileFolder))
+        {
+            
+            string[] audioFiles = Directory.GetFiles(profileFolder, "*.mp3");
+
+            using (Graphics g2 = this.CreateGraphics())
+            {
+                TuioDemo_Paint(this,new PaintEventArgs(g2,this.ClientRectangle));
+            }
+
+            int audioFileCount = audioFiles.Length;
+
+            Console.WriteLine("Number of audio files: " + audioFileCount);
+
+            
+            foreach (string audioFile in audioFiles)
+            {
+                Console.WriteLine("Playing audio file: " + audioFile);
+                
+            }
+        }
+        else
+        {
+            Console.WriteLine("Profile folder does not exist: " + profileFolder);
+        }
+    }
+
 
     private void InitializeComponent()
     {
