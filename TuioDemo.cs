@@ -40,6 +40,12 @@ public class TuioDemo : Form, TuioListener
     private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
     private AudioFileReader audioFile = null; // Explicitly declare the type
 
+    private string profileFolder;
+
+    private string[] audioFiles;
+    private string[] audioFiles2;
+    private string audioFileName;
+
     public static int width, height;
     private int window_width = 640;
     private int window_height = 480;
@@ -69,8 +75,8 @@ public class TuioDemo : Form, TuioListener
         height = window_height;
 
         this.ClientSize = new System.Drawing.Size(width, height);
-        this.Name = "TuioDemo";
-        this.Text = "TuioDemo";
+        this.Name = "Music Player";
+        this.Text = "Music Player";
 
         this.Closing += new CancelEventHandler(Form_Closing);
         this.KeyDown += new KeyEventHandler(Form_KeyDown);
@@ -94,9 +100,27 @@ public class TuioDemo : Form, TuioListener
         string text = "Welcome" + folderName;
         Font fonttext = new Font("Arial", 18);
         Brush textBrush = Brushes.White;
-        int textY = this.ClientSize.Height / 2;
+        int textY = 0;
         int textX = this.ClientSize.Width / 2 - 100;
         g.DrawString(text, fonttext, textBrush, new PointF(textX, textY));
+
+        String Text = "list of your songs:";
+        Font fonttext2 = new Font("Arial", 14);
+        Brush textBrush2 = Brushes.White;
+        int textY2 = this.ClientSize.Height - 200;
+        int textX2 = this.ClientSize.Width / 2 - 100;
+
+        g.DrawString(Text, fonttext2, textBrush2, new PointF(textX2, textY2));
+        //string[] Text3 = new string[20];
+        for (int i = 0; i < audioFiles.Length; i++)
+        {
+            audioFileName = Path.GetFileName(audioFiles[i]);
+            Console.WriteLine(audioFileName);
+
+            textY2 += 20;
+
+            g.DrawString(audioFileName.ToString(), fonttext2, textBrush2, new PointF(textX2, textY2));
+        }
     }
 
     private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -165,7 +189,7 @@ public class TuioDemo : Form, TuioListener
 
         }
         if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
-        
+
     }
 
     public void updateTuioObject(TuioObject o)
@@ -184,8 +208,6 @@ public class TuioDemo : Form, TuioListener
     }
 
     public void removeTuioObject(TuioObject o)
-
-
     {
         foreach (TuioObject tobj in objectList.Values)
         {
@@ -196,7 +218,7 @@ public class TuioDemo : Form, TuioListener
             }
             else
             {
-                Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "___________");
+                Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "____i_______");
             }
         }
 
@@ -294,8 +316,8 @@ public class TuioDemo : Form, TuioListener
         // draw the objects
         string objectImagePath;
         string backgroundImagePath;
-        string audioFilePath;
-        string Profilename;
+        //string audioFilePath;
+        //string Profilename;
         if (objectList.Count > 0)
         {
             lock (objectList)
@@ -309,117 +331,127 @@ public class TuioDemo : Form, TuioListener
                     switch (tobj.SymbolID)
                     {
                         case 1:
-                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
-                            backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            //objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            //backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
                             PlayProfileAudio(tobj.SymbolID);
 
 
+                            System.Threading.Thread.Sleep(100);
 
                             break;
                         case 2:
                             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
+                            PlayProfileAudio(tobj.SymbolID);
+                            /// Music[tobj.SymbolID] = 1;
+                            //audioFilePath = "04._Ana_Mosh_Anany.mp3";
+                            //using (var audioFile = new AudioFileReader(audioFilePath))
+                            //using (outputDevices[tobj.SessionID] = new WaveOutEvent())
+                            //{
+                            //    outputDevices[tobj.SessionID].Init(audioFile);
+                            //    outputDevices[tobj.SessionID].Play();
+                            //    //outputDevices[tobj.SymbolID].Volume=vol;
+                            //    Music[tobj.SessionID] = 1;
 
-                            ///Music[tobj.SymbolID] = 1;
-                            audioFilePath = "04._Ana_Mosh_Anany.mp3";
-                            using (var audioFile = new AudioFileReader(audioFilePath))
-                            using (outputDevices[tobj.SessionID] = new WaveOutEvent())
-                            {
-                                outputDevices[tobj.SessionID].Init(audioFile);
-                                outputDevices[tobj.SessionID].Play();
-                                //outputDevices[tobj.SymbolID].Volume=vol;
-                                Music[tobj.SessionID] = 1;
+                            //    Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
 
-                                Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
+                            //    // Keep the program running until the audio finishes playing
+                            //    while (outputDevices[tobj.SessionID].PlaybackState == PlaybackState.Playing)
+                            //    {
 
-                                // Keep the program running until the audio finishes playing
-                                while (outputDevices[tobj.SessionID].PlaybackState == PlaybackState.Playing)
-                                {
-                                    //System.Threading.Thread.Sleep(100);
-                                }
+                            //    }
 
-                            }
-
+                            //}
+                            System.Threading.Thread.Sleep(100);
                             break;
                         case 0:
                             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
                             objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
-                            
+
+                            System.Threading.Thread.Sleep(100);
 
 
                             break;
+
+                        case 10:
+                            AudioPlay(profileFolder);
+
+                            break;
+
                         default:
                             // Use default rectangle for other IDs
                             g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
                             g.DrawString(tobj.SymbolID + "", font, fntBrush, new PointF(ox - 10, oy - 10));
 
+
                             continue;
                     }
 
                     // Debugging the image paths
-                    Console.WriteLine($"Object Image Path: {objectImagePath}");
-                    Console.WriteLine($"Background Image Path: {backgroundImagePath}");
+                    //Console.WriteLine($"Object Image Path: {objectImagePath}");
+                    //Console.WriteLine($"Background Image Path: {backgroundImagePath}");
 
-                    try
-                    {
-                        // Draw background image without rotation
-                        if (File.Exists(backgroundImagePath))
-                        {
-                            using (Image bgImage = Image.FromFile(backgroundImagePath))
-                            {
-                                if (tobj.SymbolID == 1)
-                                {
-                                    g.DrawImage(bgImage, new Rectangle(0, 0, width / 2, height));
+                    //    try
+                    //    {
+                    //        Draw background image without rotation
+                    //        if (File.Exists(backgroundImagePath))
+                    //        {
+                    //            using (Image bgImage = Image.FromFile(backgroundImagePath))
+                    //            {
+                    //                if (tobj.SymbolID == 1)
+                    //                {
+                    //                    g.DrawImage(bgImage, new Rectangle(0, 0, width, height));
 
-                                }
-                                else if (tobj.SymbolID == 0)
-                                {
-                                    g.DrawImage(bgImage, new Rectangle(width / 2, 0, width / 2, height));
-                                }
-                                // Draw the rotated object
-                                else
-                                {
-                                    g.DrawImage(bgImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Background image not found: {backgroundImagePath}");
-                        }
+                    //                }
+                    //                else if (tobj.SymbolID == 0)
+                    //                {
+                    //                    g.DrawImage(bgImage, new Rectangle(width / 2, 0, width / 2, height));
+                    //                }
+                    //                // Draw the rotated object
+                    //                else
+                    //                {
+                    //                    g.DrawImage(bgImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                    //                }
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            Console.WriteLine($"Background image not found: {backgroundImagePath}");
+                    //        }
 
-                        // Draw object image with rotation
-                        if (File.Exists(objectImagePath))
-                        {
-                            using (Image objectImage = Image.FromFile(objectImagePath))
-                            {
-                                // Save the current state of the graphics object
-                                GraphicsState state = g.Save();
+                    //        // Draw object image with rotation
+                    //        if (File.Exists(objectImagePath))
+                    //        {
+                    //            using (Image objectImage = Image.FromFile(objectImagePath))
+                    //            {
+                    //                // Save the current state of the graphics object
+                    //                GraphicsState state = g.Save();
 
-                                // Apply transformations for rotation
-                                g.TranslateTransform(ox, oy);
-                                g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
-                                g.TranslateTransform(-ox, -oy);
+                    //                // Apply transformations for rotation
+                    //                g.TranslateTransform(ox, oy);
+                    //                g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                    //                g.TranslateTransform(-ox, -oy);
 
-                                // Draw the rotated object
-                                g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                    //                // Draw the rotated object
+                    //                g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
 
-                                // Restore the graphics state
-                                g.Restore(state);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Object image not found: {objectImagePath}");
-                            // Fall back to drawing a rectangle
-                            //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                        }
-                    }
-                    catch
-                    {
-                        Console.WriteLine("alooooo");
-                    }
+                    //                // Restore the graphics state
+                    //                g.Restore(state);
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            Console.WriteLine($"Object image not found: {objectImagePath}");
+                    //            // Fall back to drawing a rectangle
+                    //            //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                    //        }
+                    //    }
+                    //    catch
+                    //    {
+                    //        Console.WriteLine("alooooo");
+                    //    }
+                    //}
 
 
                 }
@@ -456,80 +488,112 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    private void PlayProfileAudio(long sessionID)
+    private void AudioPlay(string profileFolder)
     {
-        string profileFolder = Path.Combine(Environment.CurrentDirectory, "Profile " + sessionID.ToString());
-        Console.WriteLine("Profile Folder: " + profileFolder);
-
-        folderName = Path.GetFileName(profileFolder);
-        Console.WriteLine("Folder Name: " + folderName);
-
-
         if (Directory.Exists(profileFolder))
         {
-            
-            string[] audioFiles = Directory.GetFiles(profileFolder, "*.mp3");
-
-            using (Graphics g2 = this.CreateGraphics())
+            audioFiles2 = Directory.GetFiles(profileFolder, "*.mp3");
+            foreach (string audio in audioFiles2)
             {
-                TuioDemo_Paint(this,new PaintEventArgs(g2,this.ClientRectangle));
-            }
-
-            int audioFileCount = audioFiles.Length;
-
-            Console.WriteLine("Number of audio files: " + audioFileCount);
-
-            
-            foreach (string audioFile in audioFiles)
-            {
-                Console.WriteLine("Playing audio file: " + audioFile);
+                string audioFilePath = audio; // Full path of the audio file
+                string audioFileName = Path.GetFileName(audioFilePath);
                 
+
+                using (var audioFile = new AudioFileReader(audioFilePath)) // Use the full path here
+                using (var outputDevice = new WaveOutEvent())
+                {
+                    outputDevice.Init(audioFile);
+                    outputDevice.Play();
+                    Console.WriteLine("Playing audio file: " + audioFileName);
+                    // Wait until the audio playback is finished before moving to the next file
+                    //while (outputDevice.PlaybackState == PlaybackState.Playing)
+                    //{
+                        System.Threading.Thread.Sleep(100); // Sleep to avoid busy-waiting
+                    //}
+                }
             }
         }
         else
         {
-            Console.WriteLine("Profile folder does not exist: " + profileFolder);
+            Console.WriteLine("Directory does not exist.");
         }
     }
 
 
-    private void InitializeComponent()
+    private void PlayProfileAudio(long SymbolID)
     {
-        this.SuspendLayout();
-        // 
-        // TuioDemo
-        // 
-        this.ClientSize = new System.Drawing.Size(278, 244);
-        this.Name = "TuioDemo";
-        this.Load += new System.EventHandler(this.TuioDemo_Load);
-        this.ResumeLayout(false);
+            profileFolder = Path.Combine(Environment.CurrentDirectory, "Profile " + SymbolID.ToString());
+            Console.WriteLine("Profile Folder: " + profileFolder);
 
+            folderName = Path.GetFileName(profileFolder);
+            Console.WriteLine("Folder Name: " + folderName);
+
+
+            if (Directory.Exists(profileFolder))
+            {
+
+                audioFiles = Directory.GetFiles(profileFolder, "*.mp3");
+
+                using (Graphics g2 = this.CreateGraphics())
+                {
+                    TuioDemo_Paint(this, new PaintEventArgs(g2, this.ClientRectangle));
+                }
+
+                int audioFileCount = audioFiles.Length;
+
+                Console.WriteLine("Number of audio files: " + audioFileCount);
+
+
+                foreach (string audioFile in audioFiles)
+                {
+                    string audioFileName2 = Path.GetFileName(audioFile);
+                    Console.WriteLine("Playing audio file: " + audioFileName2);
+
+                }
+            }
+            else
+            {
+                Console.WriteLine("Profile folder does not exist: " + profileFolder);
+            }
     }
 
-    private void TuioDemo_Load(object sender, EventArgs e)
-    {
 
-    }
-
-    public static void Main(String[] argv)
-    {
-        int port = 0;
-        switch (argv.Length)
+        private void InitializeComponent()
         {
-            case 1:
-                port = int.Parse(argv[0], null);
-                if (port == 0) goto default;
-                break;
-            case 0:
-                port = 3333;
-                break;
-            default:
-                Console.WriteLine("usage: mono TuioDemo [port]");
-                System.Environment.Exit(0);
-                break;
+            this.SuspendLayout();
+            // 
+            // TuioDemo
+            // 
+            this.ClientSize = new System.Drawing.Size(278, 244);
+            this.Name = "TuioDemo";
+            this.Load += new System.EventHandler(this.TuioDemo_Load);
+            this.ResumeLayout(false);
+
         }
 
-        TuioDemo app = new TuioDemo(port);
-        Application.Run(app);
-    }
+        private void TuioDemo_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        public static void Main(String[] argv)
+        {
+            int port = 0;
+            switch (argv.Length)
+            {
+                case 1:
+                    port = int.Parse(argv[0], null);
+                    if (port == 0) goto default;
+                    break;
+                case 0:
+                    port = 3333;
+                    break;
+                default:
+                    Console.WriteLine("usage: mono TuioDemo [port]");
+                    System.Environment.Exit(0);
+                    break;
+            }
+            TuioDemo app = new TuioDemo(port);
+            Application.Run(app);
+        }
 }
