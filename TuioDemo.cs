@@ -40,6 +40,8 @@ public class TuioDemo : Form, TuioListener
 
     private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
     private AudioFileReader audioFile = null; // Explicitly declare the type
+    private bool isPlaying = false;
+    private WaveOutEvent outputDevice;
 
     private string profileFolder;
 
@@ -56,6 +58,7 @@ public class TuioDemo : Form, TuioListener
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
 
     public int f = 0;
+    int currentSessionID = 1;
 
     private bool fullscreen;
     private bool verbose;
@@ -197,16 +200,18 @@ public class TuioDemo : Form, TuioListener
 
     public void updateTuioObject(TuioObject o)
     {
-
-        if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
-        float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
-        volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
-
-        // Set the volume for the audio output
-        if (outputDevices[o.SessionID] != null)
+        if (outputDevice != null && isPlaying == true)
         {
-            outputDevices[o.SessionID].Volume = volume;  // Adjust volume directly
-            Console.WriteLine("Volume set to: " + volume);
+            if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+            float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
+            volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
+
+            // Set the volume for the audio output
+            if (outputDevice != null)
+            {
+                outputDevice.Volume = volume;  // Adjust volume directly
+                Console.WriteLine("Volume set to: " + volume);
+            }
         }
     }
 
@@ -378,16 +383,32 @@ public class TuioDemo : Form, TuioListener
                             break;
 
                         case 10:
-                            if (f == 0)
+                            if (isPlaying == false)
                             {
                                 Thread thread1 = new Thread(() => AudioPlay(profileFolder));
                                 thread1.Start();
+                                isPlaying = true;
                                 f = 1;
                             }
+
                             //thread1.Join();
                             //Console.WriteLine("a333333");
                             //AudioPlay(profileFolder);
 
+                            break;
+
+                        case 11:
+                            if (outputDevice != null && isPlaying)
+                            {
+                                StopAudio();
+                            }
+                            break;
+
+                        case 9:
+                            if (outputDevice != null && isPlaying==false)
+                            {
+                                PlayAudio();
+                            }
                             break;
 
                         default:
@@ -499,6 +520,34 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
+    private void StopAudio()
+    {
+        if (outputDevice != null && isPlaying)
+        {
+            outputDevice.Pause(); // Stop the audio playback
+            isPlaying = false;
+            Console.WriteLine("Audio stopped.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
+
+    private void PlayAudio()
+    {
+        if (outputDevice != null && isPlaying == false)
+        {
+            outputDevice.Play(); // Stop the audio playback
+            isPlaying = true;
+            Console.WriteLine("Audio Played.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
+
     private void AudioPlay(string profileFolder)
     {
         if (Directory.Exists(profileFolder))
@@ -511,16 +560,17 @@ public class TuioDemo : Form, TuioListener
                 Console.WriteLine("Playing audio file: " + audioFileName);
 
                 using (var audioFile = new AudioFileReader(audioFilePath)) // Use the full path here
-                using (var outputDevice = new WaveOutEvent())
+                using ( outputDevice = new WaveOutEvent())
                 {
                     outputDevice.Init(audioFile);
                     outputDevice.Play();
 
                     // Wait until the audio playback is finished before moving to the next file
-                    while (outputDevice.PlaybackState == PlaybackState.Playing )
+                    while (outputDevice.PlaybackState == PlaybackState.Playing || f == 1)
                     {
                         System.Threading.Thread.Sleep(100); // Sleep to avoid busy-waiting
                     }
+                    isPlaying = false;
                     f = 0;
                     Console.WriteLine("ana tl3tttt");
                 }
