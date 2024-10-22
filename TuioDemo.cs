@@ -26,6 +26,7 @@ using TUIO;
 using System.IO;
 using System.Drawing.Drawing2D;
 using NAudio.Wave;
+using System.Threading;
 public class TuioDemo : Form, TuioListener
 {
     private TuioClient client;
@@ -53,6 +54,8 @@ public class TuioDemo : Form, TuioListener
     private int window_top = 0;
     private int screen_width = Screen.PrimaryScreen.Bounds.Width;
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
+
+    public int f = 0;
 
     private bool fullscreen;
     private bool verbose;
@@ -337,7 +340,7 @@ public class TuioDemo : Form, TuioListener
                             PlayProfileAudio(tobj.SymbolID);
 
 
-                            System.Threading.Thread.Sleep(100);
+                            System.Threading.Thread.Sleep(1000);
 
                             break;
                         case 2:
@@ -375,7 +378,15 @@ public class TuioDemo : Form, TuioListener
                             break;
 
                         case 10:
-                            AudioPlay(profileFolder);
+                            if (f == 0)
+                            {
+                                Thread thread1 = new Thread(() => AudioPlay(profileFolder));
+                                thread1.Start();
+                                f = 1;
+                            }
+                            //thread1.Join();
+                            //Console.WriteLine("a333333");
+                            //AudioPlay(profileFolder);
 
                             break;
 
@@ -497,19 +508,21 @@ public class TuioDemo : Form, TuioListener
             {
                 string audioFilePath = audio; // Full path of the audio file
                 string audioFileName = Path.GetFileName(audioFilePath);
-                
+                Console.WriteLine("Playing audio file: " + audioFileName);
 
                 using (var audioFile = new AudioFileReader(audioFilePath)) // Use the full path here
                 using (var outputDevice = new WaveOutEvent())
                 {
                     outputDevice.Init(audioFile);
                     outputDevice.Play();
-                    Console.WriteLine("Playing audio file: " + audioFileName);
+
                     // Wait until the audio playback is finished before moving to the next file
-                    //while (outputDevice.PlaybackState == PlaybackState.Playing)
-                    //{
+                    while (outputDevice.PlaybackState == PlaybackState.Playing )
+                    {
                         System.Threading.Thread.Sleep(100); // Sleep to avoid busy-waiting
-                    //}
+                    }
+                    f = 0;
+                    Console.WriteLine("ana tl3tttt");
                 }
             }
         }
@@ -522,78 +535,78 @@ public class TuioDemo : Form, TuioListener
 
     private void PlayProfileAudio(long SymbolID)
     {
-            profileFolder = Path.Combine(Environment.CurrentDirectory, "Profile " + SymbolID.ToString());
-            Console.WriteLine("Profile Folder: " + profileFolder);
+        profileFolder = Path.Combine(Environment.CurrentDirectory, "Profile " + SymbolID.ToString());
+        Console.WriteLine("Profile Folder: " + profileFolder);
 
-            folderName = Path.GetFileName(profileFolder);
-            Console.WriteLine("Folder Name: " + folderName);
+        folderName = Path.GetFileName(profileFolder);
+        Console.WriteLine("Folder Name: " + folderName);
 
 
-            if (Directory.Exists(profileFolder))
+        if (Directory.Exists(profileFolder))
+        {
+
+            audioFiles = Directory.GetFiles(profileFolder, "*.mp3");
+
+            using (Graphics g2 = this.CreateGraphics())
             {
-
-                audioFiles = Directory.GetFiles(profileFolder, "*.mp3");
-
-                using (Graphics g2 = this.CreateGraphics())
-                {
-                    TuioDemo_Paint(this, new PaintEventArgs(g2, this.ClientRectangle));
-                }
-
-                int audioFileCount = audioFiles.Length;
-
-                Console.WriteLine("Number of audio files: " + audioFileCount);
-
-
-                foreach (string audioFile in audioFiles)
-                {
-                    string audioFileName2 = Path.GetFileName(audioFile);
-                    Console.WriteLine("Playing audio file: " + audioFileName2);
-
-                }
+                TuioDemo_Paint(this, new PaintEventArgs(g2, this.ClientRectangle));
             }
-            else
+
+            int audioFileCount = audioFiles.Length;
+
+            Console.WriteLine("Number of audio files: " + audioFileCount);
+
+
+            foreach (string audioFile in audioFiles)
             {
-                Console.WriteLine("Profile folder does not exist: " + profileFolder);
+                string audioFileName2 = Path.GetFileName(audioFile);
+                Console.WriteLine("Playing audio file: " + audioFileName2);
+
             }
+        }
+        else
+        {
+            Console.WriteLine("Profile folder does not exist: " + profileFolder);
+        }
     }
 
 
-        private void InitializeComponent()
+    private void InitializeComponent()
+    {
+        this.SuspendLayout();
+        // 
+        // TuioDemo
+        // 
+        this.ClientSize = new System.Drawing.Size(278, 244);
+        this.Name = "TuioDemo";
+        this.Load += new System.EventHandler(this.TuioDemo_Load);
+        this.ResumeLayout(false);
+
+    }
+
+    private void TuioDemo_Load(object sender, EventArgs e)
+    {
+
+    }
+
+    public static void Main(String[] argv)
+    {
+        int port = 0;
+        switch (argv.Length)
         {
-            this.SuspendLayout();
-            // 
-            // TuioDemo
-            // 
-            this.ClientSize = new System.Drawing.Size(278, 244);
-            this.Name = "TuioDemo";
-            this.Load += new System.EventHandler(this.TuioDemo_Load);
-            this.ResumeLayout(false);
-
+            case 1:
+                port = int.Parse(argv[0], null);
+                if (port == 0) goto default;
+                break;
+            case 0:
+                port = 3333;
+                break;
+            default:
+                Console.WriteLine("usage: mono TuioDemo [port]");
+                System.Environment.Exit(0);
+                break;
         }
-
-        private void TuioDemo_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        public static void Main(String[] argv)
-        {
-            int port = 0;
-            switch (argv.Length)
-            {
-                case 1:
-                    port = int.Parse(argv[0], null);
-                    if (port == 0) goto default;
-                    break;
-                case 0:
-                    port = 3333;
-                    break;
-                default:
-                    Console.WriteLine("usage: mono TuioDemo [port]");
-                    System.Environment.Exit(0);
-                    break;
-            }
-            TuioDemo app = new TuioDemo(port);
-            Application.Run(app);
-        }
+        TuioDemo app = new TuioDemo(port);
+        Application.Run(app);
+    }
 }
