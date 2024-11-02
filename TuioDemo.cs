@@ -1,22 +1,3 @@
-/*
-	TUIO C# Demo - part of the reacTIVision project
-	Copyright (c) 2005-2016 Martin Kaltenbrunner <martin@tuio.org>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -27,10 +8,70 @@ using System.IO;
 using System.Drawing.Drawing2D;
 using NAudio.Wave;
 using System.Threading;
+using System.Reflection;
+using System.Text;
+using System.Net.Sockets;
+
+class Client
+{
+    int byteCT;
+    public NetworkStream stream;
+    byte[] sendData;
+    public TcpClient client;
+
+    public bool connectToSocket(string host, int portNumber)
+    {
+        try
+        {
+            client = new TcpClient(host, portNumber);
+            stream = client.GetStream();
+            Console.WriteLine("connection made ! with " + host);
+            return true;
+        }
+        catch (System.Net.Sockets.SocketException e)
+        {
+            Console.WriteLine("Connection Failed: " + e.Message);
+            return false;
+        }
+    }
+
+    public string recieveMessage()
+    {
+        try
+        {
+
+            byte[] receiveBuffer = new byte[1024];
+            int bytesReceived = stream.Read(receiveBuffer, 0, 1024);
+            Console.WriteLine(bytesReceived);
+            string data = Encoding.UTF8.GetString(receiveBuffer, 0, bytesReceived);
+            Console.WriteLine(data);
+            return data;
+        }
+        catch (System.Exception e)
+        {
+
+        }
+
+        return null;
+    }
+
+}
+
 public class TuioDemo : Form, TuioListener
 {
     private TuioClient client;
-    private int[] Music = new int[200];
+    private int[] Music;// = new int[200];
+    private int[] Catch;// = new int[200];
+    bool stringW = false;
+    int next_x_start = 0;
+    int next_x_end = 0;
+    int next_y_start = 0;
+    int next_y_end = 0;
+    int previous_x_start = 0;
+    int previous_x_end = 0;
+    int previous_y_start = 0;
+    int previous_y_end = 0;
+    int index = 0;
 
     private Dictionary<long, TuioObject> objectList;
     private Dictionary<long, TuioCursor> cursorList;
@@ -38,9 +79,11 @@ public class TuioDemo : Form, TuioListener
 
     private string[] profiles = new string[3] { "Profile 1", "Profile2", "Profile 3" };
 
-    private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
+    private WaveOutEvent outputDevice = null;// Explicitly declare the type
     private AudioFileReader audioFile = null; // Explicitly declare the type
-
+    //
+    private bool isPlaying = false;
+    //
     private string profileFolder;
 
     private string[] audioFiles;
@@ -56,6 +99,8 @@ public class TuioDemo : Form, TuioListener
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
 
     public int f = 0;
+    public int flag_User = 0;
+    public string flag_LastMusic = null;
 
     private bool fullscreen;
     private bool verbose;
@@ -95,7 +140,28 @@ public class TuioDemo : Form, TuioListener
         client.addTuioListener(this);
 
         client.connect();
+        //stream();
     }
+
+    public void stream()
+    {
+        Client c = new Client();
+        c.connectToSocket("localhost", 5000);
+        string msg = "";
+        msg = c.recieveMessage();
+        Console.WriteLine("Connection Terminated !");
+        c.stream.Close();
+        c.client.Close();
+
+        //while (true)
+        //{
+        //    if (msg == "q")
+        //    {
+        //        break;
+        //    }
+        //}
+    }
+
 
     private void TuioDemo_Paint(object sender, PaintEventArgs e)
     {
@@ -124,6 +190,37 @@ public class TuioDemo : Form, TuioListener
 
             g.DrawString(audioFileName.ToString(), fonttext2, textBrush2, new PointF(textX2, textY2));
         }
+    }
+
+    private void TuioDemo1_Paint(object sender, PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+
+        string text1 = "pause (Remove TUIO)";
+        Font fonttext1 = new Font("Arial", 10);
+        Brush textBrush1 = Brushes.White;
+
+        int textX1 = this.ClientSize.Width / 2 - 100;
+        int textY1 = this.ClientSize.Height / 2;
+
+        g.DrawString(text1, fonttext1, textBrush1, new PointF(textX1 + 35, textY1));
+
+        g.DrawString("Next song", fonttext1, textBrush1, new PointF(this.ClientSize.Width - 150, this.ClientSize.Height / 2));
+
+        next_x_start = this.ClientSize.Width - 150;
+        next_x_end = this.ClientSize.Width - 50;
+        next_y_start = (this.ClientSize.Height / 2) - 50;
+        next_y_end = (this.ClientSize.Height / 2) + 50;
+
+
+        g.DrawString("previous song", fonttext1, textBrush1, new PointF(this.ClientSize.Width - 600, this.ClientSize.Height / 2));
+
+        previous_x_start = this.ClientSize.Width - 500;
+        previous_x_end = this.ClientSize.Width - 400;
+        previous_y_start = (this.ClientSize.Height / 2) - 50;
+        previous_y_end = (this.ClientSize.Height / 2) + 50;
+
+
     }
 
     private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -197,33 +294,143 @@ public class TuioDemo : Form, TuioListener
 
     public void updateTuioObject(TuioObject o)
     {
-
-        if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
-        float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
-        volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
-
-        // Set the volume for the audio output
-        if (outputDevices[o.SessionID] != null)
+        if (outputDevice != null && isPlaying == true)
         {
-            outputDevices[o.SessionID].Volume = volume;  // Adjust volume directly
-            Console.WriteLine("Volume set to: " + volume);
+
+
+            if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+            float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
+            volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
+
+            // Set the volume for the audio output
+            if (outputDevice != null)
+            {
+                outputDevice.Volume = volume;  // Adjust volume directly
+                Console.WriteLine("Volume set to: " + volume);
+            }
+
+
+            ////////////////////////////////////////Next///////////////////////////////////////////
+            Console.WriteLine("in Update Next" + (o.X * 1000).ToString() + "+_+_+_++_+_" + next_x_start.ToString() + "  ____________" + next_x_end.ToString());
+            if (o.X * 1000 >= next_x_start && o.X * 1000 <= next_x_end)
+            {
+                Console.WriteLine("in X Next");
+                Console.WriteLine("in X Next" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + next_y_start.ToString() + "  ____________" + next_y_end.ToString());
+
+
+                if (o.Y * 1000 >= next_y_start && o.Y * 1000 <= next_y_end)
+                {
+                    Console.WriteLine("in Y Next");
+                    //Console.WriteLine("in Y" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + next_y_start.ToString() + "  ____________" + next_y_end.ToString());
+
+                    if (outputDevice != null)
+                    {
+                        outputDevice.Stop();
+                        index++;
+
+                        // Console.WriteLine("in YY");
+
+
+                        if (flag_User == 1)
+                        {
+                            if (index == audioFiles2.Length)
+                            {
+                                index = 0;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        if (flag_User == 2)
+                        {
+                            if (index == audioFiles2.Length)
+                            {
+                                index = 0;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        OnPaintBackground(new PaintEventArgs(this.CreateGraphics(), this.ClientRectangle));
+                        System.Threading.Thread.Sleep(1000);
+
+                    }
+
+
+                }
+
+
+
+
+
+            }
+
+            Console.WriteLine("in Update prev" + (o.X * 1000).ToString() + "+_+_+_++_+_" + previous_x_start.ToString() + "  ____________" + previous_x_end.ToString());
+
+
+            if ((o.X * 1000) >= previous_x_start && (o.X * 1000) <= previous_x_end)
+            {
+                Console.WriteLine("in X Prev");
+                Console.WriteLine("in X Prev" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + previous_y_start.ToString() + "  ____________" + previous_y_end.ToString());
+
+                if (o.Y * 1000 >= previous_y_start && o.Y * 1000 <= previous_y_end)
+                {
+                    Console.WriteLine("in Y Prev");
+                    if (outputDevice != null)
+                    {
+                        outputDevice.Stop();
+                        index--;
+                        //if (index == -1)
+                        //{
+                        //    index = 1;
+
+                        //}
+                        //audioFilePath = ListOfMusics[index] + ".mp3";
+
+                        if (flag_User == 1)
+                        {
+                            if (index == -1)
+                            {
+                                index = audioFiles2.Length;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        if (flag_User == 2)
+                        {
+                            if (index == -1)
+                            {
+                                index = audioFiles2.Length;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+                        OnPaintBackground(new PaintEventArgs(this.CreateGraphics(), this.ClientRectangle));
+                        System.Threading.Thread.Sleep(1000);
+
+
+
+                    }
+                }
+            }
         }
     }
 
     public void removeTuioObject(TuioObject o)
     {
-        foreach (TuioObject tobj in objectList.Values)
-        {
-            if (Music[tobj.SessionID] == 1 && outputDevices[tobj.SessionID] != null)
-            {
-                outputDevices[tobj.SessionID].Stop();
-                break;
-            }
-            else
-            {
-                Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "____i_______");
-            }
-        }
+        //foreach (TuioObject tobj in objectList.Values)
+        //{
+        //    if (Music[tobj.SessionID] == 1 && outputDevices[tobj.SessionID] != null)
+        //    {
+        //        outputDevices[tobj.SessionID].Stop();
+        //        break;
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "____i_______");
+        //    }
+        //}
 
         lock (objectList)
         {
@@ -339,8 +546,9 @@ public class TuioDemo : Form, TuioListener
                             Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
                             PlayProfileAudio(tobj.SymbolID);
 
-
-                            System.Threading.Thread.Sleep(1000);
+                            flag_User = 1;
+                            index = 0;
+                            System.Threading.Thread.Sleep(100);
 
                             break;
                         case 2:
@@ -366,6 +574,8 @@ public class TuioDemo : Form, TuioListener
                             //    }
 
                             //}
+                            flag_User = 2;
+                            index = 0;
                             System.Threading.Thread.Sleep(100);
                             break;
                         case 0:
@@ -378,16 +588,38 @@ public class TuioDemo : Form, TuioListener
                             break;
 
                         case 10:
-                            if (f == 0)
+                            if (isPlaying == false)
                             {
-                                Thread thread1 = new Thread(() => AudioPlay(profileFolder));
+                                Thread thread1 = new Thread(() => AudioPlay(profileFolder, index));
                                 thread1.Start();
+                                isPlaying = true;
                                 f = 1;
                             }
+                            using (Graphics g2 = this.CreateGraphics())
+                            {
+                                TuioDemo1_Paint(this, new PaintEventArgs(g2, this.ClientRectangle));
+                            }
+                            System.Threading.Thread.Sleep(100);
+
+
                             //thread1.Join();
                             //Console.WriteLine("a333333");
                             //AudioPlay(profileFolder);
 
+                            break;
+
+                        case 11:
+                            if (outputDevice != null && isPlaying)
+                            {
+                                StopAudio();
+                            }
+                            break;
+
+                        case 9:
+                            if (outputDevice != null && isPlaying == false)
+                            {
+                                PlayAudio();
+                            }
                             break;
 
                         default:
@@ -398,73 +630,6 @@ public class TuioDemo : Form, TuioListener
 
                             continue;
                     }
-
-                    // Debugging the image paths
-                    //Console.WriteLine($"Object Image Path: {objectImagePath}");
-                    //Console.WriteLine($"Background Image Path: {backgroundImagePath}");
-
-                    //    try
-                    //    {
-                    //        Draw background image without rotation
-                    //        if (File.Exists(backgroundImagePath))
-                    //        {
-                    //            using (Image bgImage = Image.FromFile(backgroundImagePath))
-                    //            {
-                    //                if (tobj.SymbolID == 1)
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(0, 0, width, height));
-
-                    //                }
-                    //                else if (tobj.SymbolID == 0)
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(width / 2, 0, width / 2, height));
-                    //                }
-                    //                // Draw the rotated object
-                    //                else
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                    //                }
-                    //            }
-                    //        }
-                    //        else
-                    //        {
-                    //            Console.WriteLine($"Background image not found: {backgroundImagePath}");
-                    //        }
-
-                    //        // Draw object image with rotation
-                    //        if (File.Exists(objectImagePath))
-                    //        {
-                    //            using (Image objectImage = Image.FromFile(objectImagePath))
-                    //            {
-                    //                // Save the current state of the graphics object
-                    //                GraphicsState state = g.Save();
-
-                    //                // Apply transformations for rotation
-                    //                g.TranslateTransform(ox, oy);
-                    //                g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
-                    //                g.TranslateTransform(-ox, -oy);
-
-                    //                // Draw the rotated object
-                    //                g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-
-                    //                // Restore the graphics state
-                    //                g.Restore(state);
-                    //            }
-                    //        }
-                    //        else
-                    //        {
-                    //            Console.WriteLine($"Object image not found: {objectImagePath}");
-                    //            // Fall back to drawing a rectangle
-                    //            //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                    //        }
-                    //    }
-                    //    catch
-                    //    {
-                    //        Console.WriteLine("alooooo");
-                    //    }
-                    //}
-
-
                 }
             }
         }
@@ -498,32 +663,67 @@ public class TuioDemo : Form, TuioListener
             }
         }
     }
+    private void StopAudio()
+    {
+        if (outputDevice != null && isPlaying)
+        {
+            outputDevice.Pause(); // Stop the audio playback
+            isPlaying = false;
+            Console.WriteLine("Audio stopped.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
 
-    private void AudioPlay(string profileFolder)
+    private void PlayAudio()
+    {
+        if (outputDevice != null && isPlaying == false)
+        {
+            outputDevice.Play(); // Stop the audio playback
+            isPlaying = true;
+            Console.WriteLine("Audio Played.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
+
+
+    private void AudioPlay(string profileFolder, int index_User)
     {
         if (Directory.Exists(profileFolder))
         {
             audioFiles2 = Directory.GetFiles(profileFolder, "*.mp3");
-            foreach (string audio in audioFiles2)
+
+            if (index_User >= 0 && index_User < audioFiles2.Length)
             {
-                string audioFilePath = audio; // Full path of the audio file
+
+                string audioFilePath = audioFiles2[index_User];
+                flag_LastMusic = audioFilePath;
                 string audioFileName = Path.GetFileName(audioFilePath);
                 Console.WriteLine("Playing audio file: " + audioFileName);
 
-                using (var audioFile = new AudioFileReader(audioFilePath)) // Use the full path here
-                using (var outputDevice = new WaveOutEvent())
+                using (var audioFile = new AudioFileReader(audioFilePath))
+                using (outputDevice = new WaveOutEvent())
                 {
                     outputDevice.Init(audioFile);
                     outputDevice.Play();
 
-                    // Wait until the audio playback is finished before moving to the next file
-                    while (outputDevice.PlaybackState == PlaybackState.Playing )
+                    while (outputDevice.PlaybackState == PlaybackState.Playing || f == 1)
                     {
-                        System.Threading.Thread.Sleep(100); // Sleep to avoid busy-waiting
+                        System.Threading.Thread.Sleep(100);
                     }
+                    isPlaying = false;
                     f = 0;
-                    Console.WriteLine("ana tl3tttt");
                 }
+            }
+            else
+            {
+
+                Console.WriteLine("Invalid index. No audio file found at index: " + index_User);
             }
         }
         else
@@ -531,6 +731,7 @@ public class TuioDemo : Form, TuioListener
             Console.WriteLine("Directory does not exist.");
         }
     }
+
 
 
     private void PlayProfileAudio(long SymbolID)
