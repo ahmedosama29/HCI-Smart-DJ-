@@ -1,23 +1,4 @@
-/*
-	TUIO C# Demo - part of the reacTIVision project
-	Copyright (c) 2005-2016 Martin Kaltenbrunner <martin@tuio.org>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
@@ -27,20 +8,81 @@ using System.IO;
 using System.Drawing.Drawing2D;
 using NAudio.Wave;
 using System.Threading;
+using System.Reflection;
+using System.Text;
+using System.Net.Sockets;
+class Client
+{
+    int byteCT;
+    public NetworkStream stream;
+    byte[] sendData;
+    public TcpClient client;
+
+    public bool connectToSocket(string host, int portNumber)
+    {
+        try
+        {
+            client = new TcpClient(host, portNumber);
+            stream = client.GetStream();
+            Console.WriteLine("connection made ! with " + host);
+            return true;
+        }
+        catch (System.Net.Sockets.SocketException e)
+        {
+            Console.WriteLine("Connection Failed: " + e.Message);
+            return false;
+        }
+    }
+
+    public string recieveMessage()
+    {
+        try
+        {
+
+            byte[] receiveBuffer = new byte[1024];
+            int bytesReceived = stream.Read(receiveBuffer, 0, 1024);
+            Console.WriteLine(bytesReceived);
+            string data = Encoding.UTF8.GetString(receiveBuffer, 0, bytesReceived);
+            Console.WriteLine(data);
+            return data;
+        }
+        catch (System.Exception e)
+        {
+
+        }
+
+        return null;
+    }
+
+}
 public class TuioDemo : Form, TuioListener
 {
     private TuioClient client;
-    private int[] Music = new int[200];
+    private int[] Music;// = new int[200];
+    private int[] Catch;// = new int[200];
+    bool stringW = false;
+    int next_x_start = 0;
+    int next_x_end = 0;
+    int next_y_start = 0;
+    int next_y_end = 0;
+    int previous_x_start = 0;
+    int previous_x_end = 0;
+    int previous_y_start = 0;
+    int previous_y_end = 0;
+    int index = 0;
 
     private Dictionary<long, TuioObject> objectList;
     private Dictionary<long, TuioCursor> cursorList;
     private Dictionary<long, TuioBlob> blobList;
-
+    private int screen = 0;  // Track if profile mode is active
     private string[] profiles = new string[3] { "Profile 1", "Profile2", "Profile 3" };
+    private List<Rectangle> playlistBoundaries = new List<Rectangle>();
 
-    private WaveOutEvent[] outputDevices = new WaveOutEvent[200];// Explicitly declare the type
+    private WaveOutEvent outputDevice = null;// Explicitly declare the type
     private AudioFileReader audioFile = null; // Explicitly declare the type
-
+    //
+    private bool isPlaying = false;
+    //
     private string profileFolder;
 
     private string[] audioFiles;
@@ -56,6 +98,8 @@ public class TuioDemo : Form, TuioListener
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
 
     public int f = 0;
+    public int flag_User = 0;
+    public string flag_LastMusic = null;
 
     private bool fullscreen;
     private bool verbose;
@@ -74,9 +118,11 @@ public class TuioDemo : Form, TuioListener
 
         verbose = false;
         fullscreen = false;
-        width = window_width;
-        height = window_height;
-
+        width = screen_width;
+        height = screen_height;
+        //this.WindowState = FormWindowState.M;
+        //this.FormBorderStyle = FormBorderStyle.None;
+        this.BackColor = Color.LightGray; // Set background color to light gray
         this.ClientSize = new System.Drawing.Size(width, height);
         this.Name = "Music Player";
         this.Text = "Music Player";
@@ -95,6 +141,25 @@ public class TuioDemo : Form, TuioListener
         client.addTuioListener(this);
 
         client.connect();
+        stream();
+    }
+    public void stream()
+    {
+        Client c = new Client();
+        c.connectToSocket("localhost", 5000);
+        string msg = "";
+        msg = c.recieveMessage();
+        Console.WriteLine("Connection Terminated !");
+        c.stream.Close();
+        c.client.Close();
+
+        //while (true)
+        //{
+        //    if (msg == "q")
+        //    {
+        //        break;
+        //    }
+        //}
     }
 
     private void TuioDemo_Paint(object sender, PaintEventArgs e)
@@ -124,6 +189,37 @@ public class TuioDemo : Form, TuioListener
 
             g.DrawString(audioFileName.ToString(), fonttext2, textBrush2, new PointF(textX2, textY2));
         }
+    }
+
+    private void TuioDemo1_Paint(object sender, PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+
+        string text1 = "pause (Remove TUIO)";
+        Font fonttext1 = new Font("Arial", 10);
+        Brush textBrush1 = Brushes.White;
+
+        int textX1 = this.ClientSize.Width / 2 - 100;
+        int textY1 = this.ClientSize.Height / 2;
+
+        g.DrawString(text1, fonttext1, textBrush1, new PointF(textX1 + 35, textY1));
+
+        g.DrawString("Next song", fonttext1, textBrush1, new PointF(this.ClientSize.Width - 150, this.ClientSize.Height / 2));
+
+        next_x_start = this.ClientSize.Width - 150;
+        next_x_end = this.ClientSize.Width - 50;
+        next_y_start = (this.ClientSize.Height / 2) - 50;
+        next_y_end = (this.ClientSize.Height / 2) + 50;
+
+
+        g.DrawString("previous song", fonttext1, textBrush1, new PointF(this.ClientSize.Width - 600, this.ClientSize.Height / 2));
+
+        previous_x_start = this.ClientSize.Width - 500;
+        previous_x_end = this.ClientSize.Width - 400;
+        previous_y_start = (this.ClientSize.Height / 2) - 50;
+        previous_y_end = (this.ClientSize.Height / 2) + 50;
+
+
     }
 
     private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -191,45 +287,154 @@ public class TuioDemo : Form, TuioListener
             objectList.Add(o.SessionID, o);
 
         }
+        if (o.SymbolID == 1)  // When marker 1 is detected
+        {
+            screen = 1;
+            Invalidate();  // Refresh the screen to show profile mode
+        }
+        if (o.SymbolID == 2)  // When marker 1 is detected
+        {
+            screen = 5;
+            Invalidate();  // Refresh the screen to show profile mode
+        }
         if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
 
     }
 
     public void updateTuioObject(TuioObject o)
     {
-
-        if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
-        float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
-        volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
-
-        // Set the volume for the audio output
-        if (outputDevices[o.SessionID] != null)
+        if (outputDevice != null && isPlaying == true)
         {
-            outputDevices[o.SessionID].Volume = volume;  // Adjust volume directly
-            Console.WriteLine("Volume set to: " + volume);
+
+
+            if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+            float volume = (float)(Math.Sin(o.Angle));  // Sine of the angle
+            volume = Math.Min(1.0f, Math.Max(0.0f, (volume + 1) / 2));  // Normalize to range [0, 1]
+
+            // Set the volume for the audio output
+            if (outputDevice != null)
+            {
+                outputDevice.Volume = volume;  // Adjust volume directly
+                Console.WriteLine("Volume set to: " + volume);
+            }
+
+
+            ////////////////////////////////////////Next///////////////////////////////////////////
+            Console.WriteLine("in Update Next" + (o.X * 1000).ToString() + "+_+_+_++_+_" + next_x_start.ToString() + "  ____________" + next_x_end.ToString());
+            if (o.X * 1000 >= next_x_start && o.X * 1000 <= next_x_end)
+            {
+                Console.WriteLine("in X Next");
+                Console.WriteLine("in X Next" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + next_y_start.ToString() + "  ____________" + next_y_end.ToString());
+
+
+                if (o.Y * 1000 >= next_y_start && o.Y * 1000 <= next_y_end)
+                {
+                    Console.WriteLine("in Y Next");
+                    //Console.WriteLine("in Y" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + next_y_start.ToString() + "  ____________" + next_y_end.ToString());
+
+                    if (outputDevice != null)
+                    {
+                        outputDevice.Stop();
+                        index++;
+
+                        // Console.WriteLine("in YY");
+
+
+                        if (flag_User == 1)
+                        {
+                            if (index == audioFiles2.Length)
+                            {
+                                index = 0;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        if (flag_User == 2)
+                        {
+                            if (index == audioFiles2.Length)
+                            {
+                                index = 0;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        OnPaintBackground(new PaintEventArgs(this.CreateGraphics(), this.ClientRectangle));
+                        System.Threading.Thread.Sleep(1000);
+                    }
+                }
+            }
+            Console.WriteLine("in Update prev" + (o.X * 1000).ToString() + "+_+_+_++_+_" + previous_x_start.ToString() + "  ____________" + previous_x_end.ToString());
+
+            if ((o.X * 1000) >= previous_x_start && (o.X * 1000) <= previous_x_end)
+            {
+                Console.WriteLine("in X Prev");
+                Console.WriteLine("in X Prev" + (o.Y * 1000).ToString() + "+_+_+_++_+_" + previous_y_start.ToString() + "  ____________" + previous_y_end.ToString());
+
+                if (o.Y * 1000 >= previous_y_start && o.Y * 1000 <= previous_y_end)
+                {
+                    Console.WriteLine("in Y Prev");
+                    if (outputDevice != null)
+                    {
+                        outputDevice.Stop();
+                        index--;
+                        //if (index == -1)
+                        //{
+                        //    index = 1;
+
+                        //}
+                        //audioFilePath = ListOfMusics[index] + ".mp3";
+
+                        if (flag_User == 1)
+                        {
+                            if (index == -1)
+                            {
+                                index = audioFiles2.Length;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+
+                        if (flag_User == 2)
+                        {
+                            if (index == -1)
+                            {
+                                index = audioFiles2.Length;
+
+                            }
+                            AudioPlay(folderName, index);
+                        }
+                        OnPaintBackground(new PaintEventArgs(this.CreateGraphics(), this.ClientRectangle));
+                        System.Threading.Thread.Sleep(1000);
+
+
+
+                    }
+                }
+            }
         }
     }
 
     public void removeTuioObject(TuioObject o)
     {
-        foreach (TuioObject tobj in objectList.Values)
-        {
-            if (Music[tobj.SessionID] == 1 && outputDevices[tobj.SessionID] != null)
-            {
-                outputDevices[tobj.SessionID].Stop();
-                break;
-            }
-            else
-            {
-                Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "____i_______");
-            }
-        }
+        //foreach (TuioObject tobj in objectList.Values)
+        //{
+        //    if (Music[tobj.SessionID] == 1 && outputDevices[tobj.SessionID] != null)
+        //    {
+        //        outputDevices[tobj.SessionID].Stop();
+        //        break;
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("NO music in " + tobj.SessionID.ToString() + "____i_______");
+        //    }
+        //}
 
         lock (objectList)
         {
             objectList.Remove(o.SessionID);
         }
-
 
         if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
     }
@@ -281,19 +486,445 @@ public class TuioDemo : Form, TuioListener
         if (verbose) Console.WriteLine("del blb " + b.BlobID + " (" + b.SessionID + ")");
     }
 
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e); // Ensures any other necessary behavior is preserved
+
+        for (int i = 0; i < playlistBoundaries.Count; i++)
+        {
+            if (playlistBoundaries[i].Contains(e.Location))
+            {
+                // Check if the current screen is for User 1 or User 2
+                if (screen == 1) // User 1's playlists
+                {
+                    screen = i + 2; // Set screen flag to 2, 3, or 4
+                }
+                /*else if (screen == 2 || screen == 3 || screen == 4) // If currently on User 1's playlists
+                {
+                    // Assuming this means User 1 can access playlists 2, 3, 4
+                    screen = i + 2; // Set to 2, 3, 4
+                }*/
+                else if (screen == 5)// User 2's playlists
+                {
+                    screen = i + 6; // Set screen flag to 6, 7, or 8
+                }
+
+                Invalidate(); // Redraw the form to switch screens
+                return;
+            }
+        }
+    }
+
     public void refresh(TuioTime frameTime)
     {
         Invalidate();
     }
+    private void DrawHomeScreen(Graphics g)
+    {
+        SolidBrush bgrBrush = new SolidBrush(Color.DarkGray); // Set to light gray
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
+        // Define rectangle dimensions
+        int rectWidth = 800;
+        int rectHeight = 200;
+        int rectX = (this.ClientSize.Width - rectWidth) / 2;
+        int rectY = (this.ClientSize.Height - rectHeight) / 2;
 
+        // Create a rounded rectangle path
+        GraphicsPath roundedRectPath = new GraphicsPath();
+        int cornerRadius = 40;
+        roundedRectPath.AddArc(rectX, rectY, cornerRadius, cornerRadius, 180, 90);
+        roundedRectPath.AddArc(rectX + rectWidth - cornerRadius, rectY, cornerRadius, cornerRadius, 270, 90);
+        roundedRectPath.AddArc(rectX + rectWidth - cornerRadius, rectY + rectHeight - cornerRadius, cornerRadius, cornerRadius, 0, 90);
+        roundedRectPath.AddArc(rectX, rectY + rectHeight - cornerRadius, cornerRadius, cornerRadius, 90, 90);
+        roundedRectPath.CloseAllFigures();
+
+        // Fill the rounded rectangle
+        Brush rectBrush = new SolidBrush(Color.Black); // Adjust color as desired
+        g.FillPath(rectBrush, roundedRectPath);
+
+        // Draw the welcome text
+        string welcomeText = "Welcome to our music player system";
+        Font textFont = new Font("Arial", 16, FontStyle.Bold);
+        Brush textBrush = Brushes.White; // Adjust text color as desired
+
+        // Center the text
+        SizeF textSize = g.MeasureString(welcomeText, textFont);
+        float textX = rectX + (rectWidth - textSize.Width) / 2;
+        float textY = rectY + (rectHeight - textSize.Height) / 2;
+        g.DrawString(welcomeText, textFont, textBrush, textX, textY);
+        // Load the image you want to display
+        Image imageToDisplay = Image.FromFile("headset.png"); // Change the path accordingly
+
+        // Calculate the position to draw the image
+        int imageWidth = 100;  // Set the desired width of the image
+        int imageHeight = 100; // Set the desired height of the image
+        int imageX = rectX + (rectWidth - imageWidth) / 2; // Centered horizontally
+        int imageY = rectY - imageHeight; // Position above the rectangle
+
+        // Draw the image
+        g.DrawImage(imageToDisplay, new Rectangle(imageX, imageY, imageWidth, imageHeight));
+
+        // Remember to dispose of the image after use to free up resources
+        imageToDisplay.Dispose();
+        // Draw small text under the rectangle
+        string loginText = "Login by connecting with Bluetooth or TUIO";
+        Font loginFont = new Font("Arial", 12, FontStyle.Regular);
+        Brush loginBrush = Brushes.White; // Adjust text color as desired
+
+        // Calculate position for the login text
+        SizeF loginTextSize = g.MeasureString(loginText, loginFont);
+        float loginTextX = rectX + (rectWidth - loginTextSize.Width) / 2;
+        float loginTextY = rectY + rectHeight + 10; // 10 pixels below the rectangle
+        g.DrawString(loginText, loginFont, loginBrush, loginTextX, loginTextY);
+    }
+    private void DrawProfileScreen1(Graphics g)
+    {
+        playlistBoundaries.Clear(); // Clear previous rectangles
+        SolidBrush bgrBrush = new SolidBrush(Color.DarkGray);
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, this.ClientSize.Width, this.ClientSize.Height));
+
+        // Draw the "Hello, User" text in a black rounded rectangle
+        string welcomeText = "Hello, User!";
+        Font welcomeFont = new Font("Arial", 24, FontStyle.Bold);
+        Brush welcomeTextBrush = Brushes.White;
+        int welcomeRectWidth = this.ClientSize.Width / 2;
+        int welcomeRectHeight = 80;
+        int welcomeRectX = (this.ClientSize.Width - welcomeRectWidth) / 2;
+        int welcomeRectY = 50;
+
+        // Create rounded rectangle for welcome text
+        GraphicsPath welcomeRoundedRect = new GraphicsPath();
+        int cornerRadius = 40;
+        welcomeRoundedRect.AddArc(welcomeRectX, welcomeRectY, cornerRadius, cornerRadius, 180, 90);
+        welcomeRoundedRect.AddArc(welcomeRectX + welcomeRectWidth - cornerRadius, welcomeRectY, cornerRadius, cornerRadius, 270, 90);
+        welcomeRoundedRect.AddArc(welcomeRectX + welcomeRectWidth - cornerRadius, welcomeRectY + welcomeRectHeight - cornerRadius, cornerRadius, cornerRadius, 0, 90);
+        welcomeRoundedRect.AddArc(welcomeRectX, welcomeRectY + welcomeRectHeight - cornerRadius, cornerRadius, cornerRadius, 90, 90);
+        welcomeRoundedRect.CloseAllFigures();
+        g.FillPath(Brushes.Black, welcomeRoundedRect);
+
+        // Draw the welcome text inside the rectangle
+        SizeF welcomeTextSize = g.MeasureString(welcomeText, welcomeFont);
+        float welcomeTextX = welcomeRectX + (welcomeRectWidth - welcomeTextSize.Width) / 2;
+        float welcomeTextY = welcomeRectY + (welcomeRectHeight - welcomeTextSize.Height) / 2;
+        g.DrawString(welcomeText, welcomeFont, welcomeTextBrush, welcomeTextX, welcomeTextY);
+
+        // Define playlists based on the user or screen
+        string[] playlistNames;
+        string[] founders;
+        string[] images;
+
+        if (screen == 1) // User 1's playlists
+        {
+            playlistNames = new[] { "Chill Vibes", "Workout Hits", "Top 50" };
+            founders = new[] { "by Alex", "by Jamie", "by Taylor" };
+            images = new[] { "song11.jpg", "song12.png", "song21.png" };
+        }
+        else // User 2's playlists
+        {
+            playlistNames = new[] { "Classical Favorites", "Hip Hop Beats", "Rock Anthems" };
+            founders = new[] { "by Sam", "by Chris", "by Morgan" };
+            images = new[] { "song31.png", "song32.png", "song33.png" };
+        }
+
+        // Display playlists side-by-side
+        int playlistWidth = 300;
+        int playlistHeight = 300;
+        int playlistsY = this.ClientSize.Height / 2 - 150; // Center vertically
+
+        int totalPlaylistsWidth = playlistNames.Length * playlistWidth + (playlistNames.Length - 1) * 20; // 20px spacing
+        int startX = (this.ClientSize.Width - totalPlaylistsWidth) / 2;
+
+        for (int i = 0; i < playlistNames.Length; i++)
+        {
+            int playlistX = startX + i * (playlistWidth + 50);
+
+            // Load and draw the playlist image
+            Image playlistImage = Image.FromFile(images[i]);
+            Rectangle playlistRect = new Rectangle(playlistX, playlistsY, playlistWidth, playlistHeight - 50);
+            playlistBoundaries.Add(playlistRect);
+            g.DrawImage(playlistImage, playlistRect); // Reserve space for text
+            playlistImage.Dispose();
+
+            // Define rectangle for playlist and founder name
+            int infoRectHeight = 60;
+            Rectangle infoRect = new Rectangle(playlistX, playlistsY + playlistHeight - 50, playlistWidth, infoRectHeight);
+            g.FillRectangle(Brushes.Black, infoRect);
+
+            // Draw playlist name inside the rectangle
+            Font playlistFont = new Font("Arial", 14, FontStyle.Bold);
+            Brush playlistBrush = Brushes.White;
+            string playlistName = playlistNames[i];
+            SizeF playlistNameSize = g.MeasureString(playlistName, playlistFont);
+            float playlistNameX = playlistX + (playlistWidth - playlistNameSize.Width) / 2;
+            float playlistNameY = playlistsY + playlistHeight - 40; // Slight padding from the top
+            g.DrawString(playlistName, playlistFont, playlistBrush, playlistNameX, playlistNameY);
+
+            // Draw founder name inside the rectangle
+            Font founderFont = new Font("Arial", 12, FontStyle.Regular);
+            Brush founderBrush = Brushes.White;
+            string founderName = founders[i];
+            SizeF founderNameSize = g.MeasureString(founderName, founderFont);
+            float founderNameX = playlistX + (playlistWidth - founderNameSize.Width) / 2;
+            float founderNameY = playlistNameY + playlistNameSize.Height + 5; // Space below playlist name
+            g.DrawString(founderName, founderFont, founderBrush, founderNameX, founderNameY);
+        }
+    }
+    private void DrawProfileListScreen1(Graphics g)
+    {
+        // Background color for the entire profile screen
+        SolidBrush bgrBrush = new SolidBrush(Color.DarkGray);
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
+
+        string playlistImagePath;
+        var songs = new[] { new { Number = 0, Title = "", Artist = "", Duration = "" } }; // Placeholder
+
+        // Set the playlist image path and song data based on the screen value
+        string userName ;
+
+        if (screen == 2)
+        {
+            userName = "User One";
+            playlistImagePath = "song11.jpg";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song D", Artist = "Artist 4", Duration = "3:15" },
+                new { Number = 2, Title = "Song E", Artist = "Artist 5", Duration = "4:05" },
+                new { Number = 3, Title = "Song F", Artist = "Artist 6", Duration = "2:45" },
+            };
+        }
+        else if (screen == 3)
+        {
+            userName = "User One";
+            playlistImagePath = "song12.png";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song G", Artist = "Artist 7", Duration = "3:30" },
+                new { Number = 2, Title = "Song H", Artist = "Artist 8", Duration = "4:10" },
+                new { Number = 3, Title = "Song I", Artist = "Artist 9", Duration = "2:55" },
+            };
+        }
+        else if (screen == 4)
+        {
+            userName = "User One";
+            playlistImagePath = "song21.png";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song J", Artist = "Artist 10", Duration = "3:50" },
+                new { Number = 2, Title = "Song K", Artist = "Artist 11", Duration = "4:25" },
+                new { Number = 3, Title = "Song L", Artist = "Artist 12", Duration = "2:40" },
+            };
+        }
+        else if (screen == 6)
+        {
+            userName = "User Two";
+            playlistImagePath = "song31.png";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song DD", Artist = "Artist 4", Duration = "3:15" },
+                new { Number = 2, Title = "Song EE", Artist = "Artist 5", Duration = "4:05" },
+                new { Number = 3, Title = "Song FF", Artist = "Artist 6", Duration = "2:45" },
+            };
+        }
+        else if (screen == 7)
+        {
+            userName = "User Two";
+            playlistImagePath = "song32.png";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song GG", Artist = "Artist 7", Duration = "3:30" },
+                new { Number = 2, Title = "Song HH", Artist = "Artist 8", Duration = "4:10" },
+                new { Number = 3, Title = "Song II", Artist = "Artist 9", Duration = "2:55" },
+            };
+        }
+        else
+        {
+            userName = "User Two";
+            playlistImagePath = "song33.png";
+            songs = new[]
+            {
+                new { Number = 1, Title = "Song JJ", Artist = "Artist 10", Duration = "3:50" },
+                new { Number = 2, Title = "Song KK", Artist = "Artist 11", Duration = "4:25" },
+                new { Number = 3, Title = "Song LL", Artist = "Artist 12", Duration = "2:40" },
+            };
+        }
+
+        // Display the playlist image with a black frame
+        int playlistImageWidth = 400;
+        int playlistImageHeight = 400;
+        int framePadding = 10; // Thickness of the black frame
+        int imageX = (this.ClientSize.Width - playlistImageWidth) / 2;
+        int imageY = 50;
+
+        // Draw black frame
+        Rectangle frameRect = new Rectangle(imageX - framePadding, imageY - framePadding, playlistImageWidth + 2 * framePadding, playlistImageHeight + 2 * framePadding);
+        g.FillRectangle(Brushes.Black, frameRect);
+
+        // Draw the playlist image
+        Image playlistImage = Image.FromFile(playlistImagePath);
+        g.DrawImage(playlistImage, new Rectangle(imageX, imageY, playlistImageWidth, playlistImageHeight));
+        playlistImage.Dispose();
+
+        // Profile User Name
+        Font userNameFont = new Font("Arial", 48, FontStyle.Bold);
+        Brush textBrush = Brushes.Black;
+        SizeF userNameSize = g.MeasureString(userName, userNameFont);
+        float userNameX = 60;
+        float userNameY = imageY + playlistImageHeight + 30;
+        g.DrawString(userName, userNameFont, textBrush, userNameX, userNameY);
+
+        // Title for the song list
+        string songListTitle = "Song List:";
+        Font titleFont = new Font("Arial", 24, FontStyle.Bold);
+        float titleX = 20;
+        float titleY = userNameY + userNameSize.Height + 30;
+        g.DrawString(songListTitle, titleFont, textBrush, titleX, titleY);
+
+        // Font and brushes for song details
+        Font songFont = new Font("Arial", 20);
+        Brush whiteTextBrush = Brushes.White;
+        Brush blackTextBrush = Brushes.Black;
+        float songY = titleY + 50;
+        Brush lightBrush = new SolidBrush(Color.White);
+        Brush darkBrush = new SolidBrush(Color.Black);
+        int rectWidth = this.ClientSize.Width - 200;
+        int rectHeight = 60;
+        int cornerRadius = 40;
+
+        // Draw each song in the list
+        foreach (var song in songs)
+        {
+            Brush backgroundBrush = (song.Number % 2 == 0) ? lightBrush : darkBrush;
+            Brush songTextBrush = (song.Number % 2 == 0) ? blackTextBrush : whiteTextBrush;
+
+            // Rounded rectangle for song background
+            GraphicsPath path = new GraphicsPath();
+            int rectX = (int)titleX;
+            int rectY = (int)songY;
+            path.AddArc(rectX, rectY, cornerRadius, cornerRadius, 180, 90);
+            path.AddArc(rectX + rectWidth - cornerRadius, rectY, cornerRadius, cornerRadius, 270, 90);
+            path.AddArc(rectX + rectWidth - cornerRadius, rectY + rectHeight - cornerRadius, cornerRadius, cornerRadius, 0, 90);
+            path.AddArc(rectX, rectY + rectHeight - cornerRadius, cornerRadius, cornerRadius, 90, 90);
+            path.CloseAllFigures();
+
+            g.FillPath(backgroundBrush, path);
+
+            // Draw song information
+            string songInfo = $"{song.Number}. {song.Title} - {song.Artist} ({song.Duration})";
+            g.DrawString(songInfo, songFont, songTextBrush, titleX + 10, songY + 15);
+            songY += rectHeight + 20;
+        }
+    }
+    private void DrawSongScreen1(Graphics g)
+    {
+        // Background color for the entire profile screen
+        SolidBrush bgrBrush = new SolidBrush(Color.DarkGray);
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
+
+        // Define the song data (simplified to show a single song)
+        string playlistImagePath;
+        string songTitle;
+        string artistName;
+
+        if (screen == 2)
+        {
+            playlistImagePath = "song11.jpg";
+            songTitle = "Song D";
+            artistName = "Artist 4";
+        }
+        else if (screen == 3)
+        {
+            playlistImagePath = "song12.png";
+            songTitle = "Song G";
+            artistName = "Artist 7";
+        }
+        else
+        {
+            playlistImagePath = "song21.png";
+            songTitle = "Song J";
+            artistName = "Artist 10";
+        }
+
+        // Define image dimensions and position
+        int imageWidth = 600;
+        int imageHeight = 600;
+        int framePadding = 10; // Frame thickness
+        int imageX = (this.ClientSize.Width - imageWidth) / 2;
+        int imageY = 50;
+
+        // Draw black frame around the song image
+        Rectangle frameRect = new Rectangle(imageX - framePadding, imageY - framePadding, imageWidth + 2 * framePadding, imageHeight + 2 * framePadding);
+        g.FillRectangle(Brushes.Black, frameRect);
+
+        // Load and draw the song image within the frame
+        Image songImage = Image.FromFile(playlistImagePath);
+        g.DrawImage(songImage, new Rectangle(imageX, imageY, imageWidth, imageHeight));
+        songImage.Dispose();
+
+        // Draw the song title below the image
+        Font titleFont = new Font("Arial", 36, FontStyle.Bold);
+        Brush textBrush = Brushes.White;
+        SizeF titleSize = g.MeasureString(songTitle, titleFont);
+        float titleX = (this.ClientSize.Width - titleSize.Width) / 2;
+        float titleY = imageY + imageHeight + 20;
+        g.DrawString(songTitle, titleFont, textBrush, titleX, titleY);
+
+        // Draw the artist name in smaller font below the title
+        Font artistFont = new Font("Arial", 12, FontStyle.Regular);
+        SizeF artistSize = g.MeasureString(artistName, artistFont);
+        float artistX = (this.ClientSize.Width - artistSize.Width) / 2;
+        float artistY = titleY + titleSize.Height + 5;
+        g.DrawString(artistName, artistFont, textBrush, artistX, artistY);
+
+        // Draw control icons (Previous, Play/Pause, Next) within circles below the artist name
+        Font controlFont = new Font("Arial", 22, FontStyle.Bold);
+        string[] controls = { "⏮", "⏯", "⏭" }; // Previous, Play/Pause, Next symbols
+        int circleDiameter = 100;
+        int controlButtonSpacing = 120;
+        int controlStartX = (this.ClientSize.Width  / 2) - 135;
+        float controlY = artistY + artistSize.Height + 40;
+
+        for (int i = 0; i < controls.Length; i++)
+        {
+            float circleX = controlStartX + i * controlButtonSpacing - circleDiameter / 2;
+
+            // Draw the circular background for each control
+            RectangleF circleRect = new RectangleF(circleX, controlY, circleDiameter, circleDiameter);
+            g.FillEllipse(Brushes.Black, circleRect); // Circle background color
+            g.DrawEllipse(Pens.Black, circleRect);     // Circle outline
+
+            // Draw the control icon inside the circle
+            SizeF iconSize = g.MeasureString(controls[i], controlFont);
+            float iconX = circleX + (circleDiameter - iconSize.Width) / 2;
+            float iconY = controlY + (circleDiameter - iconSize.Height) / 2;
+            g.DrawString(controls[i], controlFont, Brushes.White, iconX, iconY);
+        }
+    }
 
 
     protected override void OnPaintBackground(PaintEventArgs pevent)
     {
         // Getting the graphics object
         Graphics g = pevent.Graphics;
-        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
+        SolidBrush bgrBrush = new SolidBrush(Color.DarkGray); // Set to light gray
 
+        if (screen == 2 || screen == 3 || screen == 4 || screen == 6 || screen == 7 || screen == 8)
+        {
+            DrawProfileListScreen1(g);
+        }
+        if (screen == 1 || screen == 5)
+        {
+            // Profile Screen Design
+            DrawProfileScreen1(g);
+        }
+        if (screen == 0)
+        {
+            // Home Screen Design
+            DrawHomeScreen(g);
+        }
+       
+
+
+        // Draw other elements (cursors, objects, blobs) below this line...
         // draw the cursor path
         if (cursorList.Count > 0)
         {
@@ -339,8 +970,9 @@ public class TuioDemo : Form, TuioListener
                             Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
                             PlayProfileAudio(tobj.SymbolID);
 
-
-                            System.Threading.Thread.Sleep(1000);
+                            flag_User = 1;
+                            index = 0;
+                            System.Threading.Thread.Sleep(100);
 
                             break;
                         case 2:
@@ -366,6 +998,8 @@ public class TuioDemo : Form, TuioListener
                             //    }
 
                             //}
+                            flag_User = 2;
+                            index = 0;
                             System.Threading.Thread.Sleep(100);
                             break;
                         case 0:
@@ -378,16 +1012,38 @@ public class TuioDemo : Form, TuioListener
                             break;
 
                         case 10:
-                            if (f == 0)
+                            if (isPlaying == false)
                             {
-                                Thread thread1 = new Thread(() => AudioPlay(profileFolder));
+                                Thread thread1 = new Thread(() => AudioPlay(profileFolder, index));
                                 thread1.Start();
+                                isPlaying = true;
                                 f = 1;
                             }
+                            using (Graphics g2 = this.CreateGraphics())
+                            {
+                                TuioDemo1_Paint(this, new PaintEventArgs(g2, this.ClientRectangle));
+                            }
+                            System.Threading.Thread.Sleep(100);
+
+
                             //thread1.Join();
                             //Console.WriteLine("a333333");
                             //AudioPlay(profileFolder);
 
+                            break;
+
+                        case 11:
+                            if (outputDevice != null && isPlaying)
+                            {
+                                StopAudio();
+                            }
+                            break;
+
+                        case 9:
+                            if (outputDevice != null && isPlaying == false)
+                            {
+                                PlayAudio();
+                            }
                             break;
 
                         default:
@@ -398,73 +1054,6 @@ public class TuioDemo : Form, TuioListener
 
                             continue;
                     }
-
-                    // Debugging the image paths
-                    //Console.WriteLine($"Object Image Path: {objectImagePath}");
-                    //Console.WriteLine($"Background Image Path: {backgroundImagePath}");
-
-                    //    try
-                    //    {
-                    //        Draw background image without rotation
-                    //        if (File.Exists(backgroundImagePath))
-                    //        {
-                    //            using (Image bgImage = Image.FromFile(backgroundImagePath))
-                    //            {
-                    //                if (tobj.SymbolID == 1)
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(0, 0, width, height));
-
-                    //                }
-                    //                else if (tobj.SymbolID == 0)
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(width / 2, 0, width / 2, height));
-                    //                }
-                    //                // Draw the rotated object
-                    //                else
-                    //                {
-                    //                    g.DrawImage(bgImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                    //                }
-                    //            }
-                    //        }
-                    //        else
-                    //        {
-                    //            Console.WriteLine($"Background image not found: {backgroundImagePath}");
-                    //        }
-
-                    //        // Draw object image with rotation
-                    //        if (File.Exists(objectImagePath))
-                    //        {
-                    //            using (Image objectImage = Image.FromFile(objectImagePath))
-                    //            {
-                    //                // Save the current state of the graphics object
-                    //                GraphicsState state = g.Save();
-
-                    //                // Apply transformations for rotation
-                    //                g.TranslateTransform(ox, oy);
-                    //                g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
-                    //                g.TranslateTransform(-ox, -oy);
-
-                    //                // Draw the rotated object
-                    //                g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-
-                    //                // Restore the graphics state
-                    //                g.Restore(state);
-                    //            }
-                    //        }
-                    //        else
-                    //        {
-                    //            Console.WriteLine($"Object image not found: {objectImagePath}");
-                    //            // Fall back to drawing a rectangle
-                    //            //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
-                    //        }
-                    //    }
-                    //    catch
-                    //    {
-                    //        Console.WriteLine("alooooo");
-                    //    }
-                    //}
-
-
                 }
             }
         }
@@ -498,32 +1087,67 @@ public class TuioDemo : Form, TuioListener
             }
         }
     }
+    private void StopAudio()
+    {
+        if (outputDevice != null && isPlaying)
+        {
+            outputDevice.Pause(); // Stop the audio playback
+            isPlaying = false;
+            Console.WriteLine("Audio stopped.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
 
-    private void AudioPlay(string profileFolder)
+    private void PlayAudio()
+    {
+        if (outputDevice != null && isPlaying == false)
+        {
+            outputDevice.Play(); // Stop the audio playback
+            isPlaying = true;
+            Console.WriteLine("Audio Played.");
+        }
+        else
+        {
+            Console.WriteLine("No audio is playing.");
+        }
+    }
+
+
+    private void AudioPlay(string profileFolder, int index_User)
     {
         if (Directory.Exists(profileFolder))
         {
             audioFiles2 = Directory.GetFiles(profileFolder, "*.mp3");
-            foreach (string audio in audioFiles2)
+
+            if (index_User >= 0 && index_User < audioFiles2.Length)
             {
-                string audioFilePath = audio; // Full path of the audio file
+
+                string audioFilePath = audioFiles2[index_User];
+                flag_LastMusic = audioFilePath;
                 string audioFileName = Path.GetFileName(audioFilePath);
                 Console.WriteLine("Playing audio file: " + audioFileName);
 
-                using (var audioFile = new AudioFileReader(audioFilePath)) // Use the full path here
-                using (var outputDevice = new WaveOutEvent())
+                using (var audioFile = new AudioFileReader(audioFilePath))
+                using (outputDevice = new WaveOutEvent())
                 {
                     outputDevice.Init(audioFile);
                     outputDevice.Play();
 
-                    // Wait until the audio playback is finished before moving to the next file
-                    while (outputDevice.PlaybackState == PlaybackState.Playing )
+                    while (outputDevice.PlaybackState == PlaybackState.Playing || f == 1)
                     {
-                        System.Threading.Thread.Sleep(100); // Sleep to avoid busy-waiting
+                        System.Threading.Thread.Sleep(100);
                     }
+                    isPlaying = false;
                     f = 0;
-                    Console.WriteLine("ana tl3tttt");
                 }
+            }
+            else
+            {
+
+                Console.WriteLine("Invalid index. No audio file found at index: " + index_User);
             }
         }
         else
@@ -531,6 +1155,7 @@ public class TuioDemo : Form, TuioListener
             Console.WriteLine("Directory does not exist.");
         }
     }
+
 
 
     private void PlayProfileAudio(long SymbolID)
