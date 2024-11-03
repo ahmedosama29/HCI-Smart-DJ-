@@ -1,0 +1,67 @@
+import asyncio
+from bleak import BleakScanner
+from datetime import datetime
+import socket
+
+# Define the Bluetooth scanning function
+async def scan_bluetooth_devices():
+    print("Scanning for Bluetooth devices...")
+    scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    devices_info = []  # List to store (name, MAC address) tuples
+
+
+    
+    try:
+        devices = await BleakScanner.discover()
+        
+        print(f"\nScan completed at {scan_time}")
+        print(f"Found {len(devices)} devices:\n")
+        
+        for device in devices:
+            device_name = device.name or "Unknown"
+            mac_address = device.address
+            print(f"Device Name: {device_name}")
+            print(f"MAC Address: {mac_address}")
+            print(f"Metadata: {device.metadata}")  # Additional debugging output
+            
+            # Add MAC address to the list
+            devices_info.append((device_name, mac_address))
+
+                        
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+    
+    # Return the list of MAC addresses
+    return devices_info
+
+# Define the function to handle socket communication
+def connect_socket(devices_info):
+    mySocket = socket.socket()
+    try:
+        mySocket.bind(('localhost', 5000))
+        mySocket.listen(5)
+        print("Waiting for a device to connect...")
+        conn, addr = mySocket.accept()
+        print("Device connected")
+        
+        # Send a message with the MAC addresses found
+        msg = f"Found {len(devices_info)} devices:\n"
+        for name, mac in devices_info:
+            msg += f"Device Name: {name}, MAC Address: {mac}\n"
+        conn.send(bytes(msg, 'utf-8'))
+    finally:
+        conn.close()
+        mySocket.close()
+        print("Socket closed")
+
+# Main function to run both Bluetooth scan and socket communication
+async def main():
+    # Run the Bluetooth scanning
+    devices_info = await scan_bluetooth_devices()
+    
+    # Start the socket connection and send MAC addresses
+    connect_socket(devices_info)
+
+# Run the main function in an async-compatible way
+await main()
