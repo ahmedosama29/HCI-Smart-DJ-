@@ -657,24 +657,115 @@ public class TuioDemo : Form, TuioListener
         string songTitle;
         string artistName;
 
-        if (screen == 2)
+        if (screen == 9)
         {
             playlistImagePath = "song11.jpg";
-            songTitle = "Song D";
-            artistName = "Artist 4";
+            songTitle = "Enta Eh";
+            artistName = "Nancy Ajram";
         }
-        else if (screen == 3)
+        else if (screen == 10)
+        {
+            playlistImagePath = "song21.png";
+            songTitle = "AL Leila";
+            artistName = "Amr Diab";
+        }
+        else if (screen == 11)
+        {
+            playlistImagePath = "song13.png";
+            songTitle = "El Ward El Blady";
+            artistName = "Asala";
+        }
+        else if (screen == 12)
         {
             playlistImagePath = "song12.png";
-            songTitle = "Song G";
-            artistName = "Artist 7";
+            songTitle = "Ashouf Feek Youm";
+            artistName = "AbdElfatah Elgireny";
+        }
+        else if (screen == 13)
+        {
+            playlistImagePath = "song23.jpg";
+            songTitle = "Bahebik Wuachtini";
+            artistName = "Hussein Al jasmi";
+        }
+        else if (screen == 14)
+        {
+            playlistImagePath = "song31.png";
+            songTitle = "Hazi Mn Alsama";
+            artistName = "Amer Monieb";
+        }
+        else if (screen == 15)
+        {
+            playlistImagePath = "song41.png";
+            songTitle = "Lemeen Haeesh";
+            artistName = "Wael Gassar";
+        }
+        else if (screen == 16)
+        {
+            playlistImagePath = "song42.png";
+            songTitle = "Asameek Elketeera";
+            artistName = "Angham";
+        }
+        else if (screen == 17)
+        {
+            playlistImagePath = "song32.png";
+            songTitle = "Hatrooh";
+            artistName = "Sherine";
+        }
+        else if (screen == 18)
+        {
+            playlistImagePath = "song21.png";
+            songTitle = "Ana Mosh Anany";
+            artistName = "Amr Diab";
+        }
+        else if (screen == 19)
+        {
+            playlistImagePath = "song62.png";
+            songTitle = "Tamenny Alaik";
+            artistName = "Mohammed Foad";
+        }
+        else if (screen == 20)
+        {
+            playlistImagePath = "song12.png";
+            songTitle = "Akheran";
+            artistName = "Sherine";
+        }
+        else if (screen == 21)
+        {
+            playlistImagePath = "song12.png";
+            songTitle = "Ana Fi Gharam";
+            artistName = "Sherine";
+        }
+        else if (screen == 22)
+        {
+            playlistImagePath = "song31.png";
+            songTitle = "Amel aih fi hayatk";
+            artistName = "Amer Monieb";
+        }
+        else if (screen == 23)
+        {
+            playlistImagePath = "song73.png";
+            songTitle = "Lyna Raasa";
+            artistName = "Karmen Seliman";
+        }
+        else if (screen == 24)
+        {
+            playlistImagePath = "song81.png";
+            songTitle = "Monaya";
+            artistName = "Mostafa Amar";
+        }
+        else if (screen == 25)
+        {
+            playlistImagePath = "song21.png";
+            songTitle = "Banadeek Taala";
+            artistName = "Amr Diab";
         }
         else
         {
             playlistImagePath = "song21.png";
-            songTitle = "Song J";
-            artistName = "Artist 10";
+            songTitle = "Betkhaby Leh";
+            artistName = "Amr Diab";
         }
+
 
         // Define image dimensions and position
         int imageWidth = 600;
@@ -737,7 +828,7 @@ public class TuioDemo : Form, TuioListener
         Graphics g = pevent.Graphics;
         SolidBrush bgrBrush = new SolidBrush(Color.DarkGray); // Set to light gray
 
-        if(screen == 9)
+        if(screen >= 9 && screen <= 26)
         {
             DrawSongScreen1(g);
         }
@@ -837,6 +928,29 @@ public class TuioDemo : Form, TuioListener
                                     whichList = 0;
                                 }
                             }*/
+                            if (id22 > 0.8)
+                            {
+                                if (screen == 12 || screen == 13 || screen == 14)
+                                {
+                                    screen = 3;
+                                }
+                                else if (screen == 15 || screen == 16 || screen == 17)
+                                {
+                                    screen = 4;
+                                }
+                                else if (screen == 18 || screen == 19 || screen == 20)
+                                {
+                                    screen = 6;
+                                }
+                                else if (screen == 21 || screen == 22 || screen == 23)
+                                {
+                                    screen = 7;
+                                }
+                                else if (screen == 24 || screen == 25 || screen == 26)
+                                {
+                                    screen = 8;
+                                }
+                            }
                             Console.WriteLine("TUIO marker detected X: " + id74 + "TUIO marker detected Y: " + id22);
                             if (id22 < 0.2 && f4 == 0)
                             {
@@ -887,6 +1001,11 @@ public class TuioDemo : Form, TuioListener
                                 {
                                     screen = 5;
                                 }
+                                else if (screen == 9 || screen == 10 || screen == 11)
+                                {
+                                    screen = 2;
+                                }
+                               
                                 f4 = 1;
 
                             }
@@ -947,9 +1066,98 @@ public class TuioDemo : Form, TuioListener
                                 f5 = 0;
                             }
                             ///////////////////////////////
-                            if (id74 > 0.7 && f3 == 0)
+                            if (id74 > 0.7)
                             {
-                                screen = 9;
+                                if(screen == 2)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 9;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 10;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 11;
+                                    }                               
+                                }
+                                if (screen == 3)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 12;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 13;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 14;
+                                    }
+                                }
+                                if (screen == 4)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 15;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 16;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 17;
+                                    }
+                                }
+                                if (screen == 6)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 18;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 19;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 20;
+                                    }
+                                }
+                                if (screen == 7)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 21;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 22;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 23;
+                                    }
+                                }
+                                if (screen == 8)
+                                {
+                                    if (whichSong == 1)
+                                    {
+                                        screen = 24;
+                                    }
+                                    if (whichSong == 2)
+                                    {
+                                        screen = 25;
+                                    }
+                                    if (whichSong == 3)
+                                    {
+                                        screen = 26;
+                                    }
+                                }
                             }
 
 
