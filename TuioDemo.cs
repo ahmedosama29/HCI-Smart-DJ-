@@ -161,7 +161,7 @@ public class TuioDemo : Form, TuioListener
         c.connectToSocket("localhost", 5000);
         string msg = "";
         msg = c.recieveMessage();
-        if(msg == "ahmed yasser")
+        if (msg == "ahmed yasser")
         {
             screen = 1;
             whichList = 0;
@@ -578,8 +578,8 @@ public class TuioDemo : Form, TuioListener
         }
 
         // Display the playlist image with a black frame
-        int playlistImageWidth = 400;
-        int playlistImageHeight = 400;
+        int playlistImageWidth = 200;
+        int playlistImageHeight = 200;
         int framePadding = 10; // Thickness of the black frame
         int imageX = (this.ClientSize.Width - playlistImageWidth) / 2;
         int imageY = 50;
@@ -605,7 +605,7 @@ public class TuioDemo : Form, TuioListener
         string songListTitle = "Song List:";
         Font titleFont = new Font("Arial", 24, FontStyle.Bold);
         float titleX = 20;
-        float titleY = userNameY + userNameSize.Height + 30;
+        float titleY = userNameY + userNameSize.Height ;
         g.DrawString(songListTitle, titleFont, textBrush, titleX, titleY);
 
         // Font and brushes for song details
@@ -768,8 +768,8 @@ public class TuioDemo : Form, TuioListener
 
 
         // Define image dimensions and position
-        int imageWidth = 600;
-        int imageHeight = 600;
+        int imageWidth = 300;
+        int imageHeight = 300;
         int framePadding = 10; // Frame thickness
         int imageX = (this.ClientSize.Width - imageWidth) / 2;
         int imageY = 50;
@@ -828,7 +828,7 @@ public class TuioDemo : Form, TuioListener
         Graphics g = pevent.Graphics;
         SolidBrush bgrBrush = new SolidBrush(Color.DarkGray); // Set to light gray
 
-        if(screen >= 9 && screen <= 26)
+        if (screen >= 9 && screen <= 26)
         {
             DrawSongScreen1(g);
         }
@@ -890,11 +890,7 @@ public class TuioDemo : Form, TuioListener
                     switch (tobj.SymbolID)
                     {
                         case 1:
-                            //objectImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
-                            //backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "bg1.jpg");
-                            //Console.WriteLine("Playing audio..." + tobj.SessionID.ToString() + "___________");
                             PlayProfileAudio(tobj.SymbolID);
-
                             flag_User = 1;
                             index = 0;
                             System.Threading.Thread.Sleep(100);
@@ -917,17 +913,7 @@ public class TuioDemo : Form, TuioListener
 
                             break;
                         case 6:
-                            /*if (whichProfile == 1 || whichProfile == 2)
-                            {
-                                if (whichList < 3)
-                                {
-                                    whichList += 1;
-                                }
-                                else
-                                {
-                                    whichList = 0;
-                                }
-                            }*/
+                            //6 t7t : back mn el a8any
                             if (id22 > 0.8)
                             {
                                 if (screen == 12 || screen == 13 || screen == 14)
@@ -952,6 +938,7 @@ public class TuioDemo : Form, TuioListener
                                 }
                             }
                             Console.WriteLine("TUIO marker detected X: " + id74 + "TUIO marker detected Y: " + id22);
+                            //6 fo2 : 5o4 el a8any
                             if (id22 < 0.2 && f4 == 0)
                             {
                                 if (screen == 1)
@@ -987,6 +974,7 @@ public class TuioDemo : Form, TuioListener
                                 f4 = 1;
                                 whichSong = 0;
                             }
+                            //6 t7t : back
                             if (id22 > 0.8 && f4 == 0)
                             {
                                 if (screen == 1 || screen == 5)
@@ -1005,7 +993,7 @@ public class TuioDemo : Form, TuioListener
                                 {
                                     screen = 2;
                                 }
-                               
+
                                 f4 = 1;
 
                             }
@@ -1019,6 +1007,7 @@ public class TuioDemo : Form, TuioListener
                             {
                                 f3 = 0;
                             }
+                            // 6 ymen : ynot list ymen
                             if (id74 > 0.7 && f3 == 0)
                             {
                                 if (whichList < 3)
@@ -1027,6 +1016,7 @@ public class TuioDemo : Form, TuioListener
                                 }
                                 f3 = 1;
                             }
+                            // 6 4mal : ynot list 4mal
                             if (id74 < 0.3 && f3 == 0)
                             {
                                 if (whichList > 0)
@@ -1039,6 +1029,7 @@ public class TuioDemo : Form, TuioListener
                             break;
 
                         case 7:
+                            // 7 fo2 : y8yr elo8nya lfo2
                             if (id22 < 0.2 && f5 == 0)
                             {
                                 if (screen == 2 || screen == 3 || screen == 4 || screen == 6 || screen == 7 || screen == 8)
@@ -1050,6 +1041,7 @@ public class TuioDemo : Form, TuioListener
                                 }
                                 f5 = 1;
                             }
+                            // 7 t7t : y8yr elo8nya lt7t
                             if (id22 > 0.8 && f5 == 0)
                             {
                                 if (screen == 2 || screen == 3 || screen == 4 || screen == 6 || screen == 7 || screen == 8)
@@ -1066,9 +1058,11 @@ public class TuioDemo : Form, TuioListener
                                 f5 = 0;
                             }
                             ///////////////////////////////
+                            // 7 ymen : y5o4 el 2o8nya
                             if (id74 > 0.7)
                             {
-                                if(screen == 2)
+                                StopAudio2();
+                                if (screen == 2)
                                 {
                                     if (whichSong == 1)
                                     {
@@ -1081,7 +1075,7 @@ public class TuioDemo : Form, TuioListener
                                     if (whichSong == 3)
                                     {
                                         screen = 11;
-                                    }                               
+                                    }
                                 }
                                 if (screen == 3)
                                 {
@@ -1166,10 +1160,132 @@ public class TuioDemo : Form, TuioListener
                         case 10:
                             if (isPlaying == false)
                             {
-                                Thread thread1 = new Thread(() => AudioPlay(profileFolder, index));
-                                thread1.Start();
-                                isPlaying = true;
-                                f = 1;
+                                if(screen == 9)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/03._Enta_Eh.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 10)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/02_Al_Leila.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 11)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/Albumaty.Com.Asala.El_Ward_El_Balady.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 12)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/03.Ashouf Feek Youm.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 13)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/01.Bahebik_Wuachtini.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 14)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/44QN21l5.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 15)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/04.Lemeen_Ha3ish.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 16)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/11._Asameek_Elketeera.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 17)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/04_-_Hatro7.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 18)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/04._Ana_Mosh_Anany.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 19)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/02.Tamenny_Alaik.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 20)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/01.Akheran.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 21)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/03.Ana_Fil_gharam.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 22)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/Albumaty.Com.Mariam.Amer.Mounib.Aamel.Eh.Fe.Hayatak.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 23)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/Albumaty.Com_karmn_slyman__lyna_rkst.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 24)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/02.Monaya.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 25)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/01_Banadeek_Taala.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
+                                if (screen == 26)
+                                {
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/09.Betkhaby_Leh.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                }
                             }
                             System.Threading.Thread.Sleep(100);
                             break;
@@ -1182,24 +1298,273 @@ public class TuioDemo : Form, TuioListener
                             }
                             if (isPlaying == true && id74 > 0.8 && f2 == 0)
                             {
-                                if (index < 2)
+                                StopAudio2();
+                                //index++;
+                                if (screen == 9)
                                 {
-                                    StopAudio2();
-                                    index++;
-                                    Thread thread1 = new Thread(() => AudioPlay(profileFolder, index));
+                                    screen = 10;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/02_Al_Leila.mp3"));
                                     thread1.Start();
                                     isPlaying = true;
                                     f = 1;
                                     f2 = 1;
                                 }
+                                if (screen == 10)
+                                {
+                                    screen = 11;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/Albumaty.Com.Asala.El_Ward_El_Balady.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 12)
+                                {
+                                    screen = 13;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/01.Bahebik_Wuachtini.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 13)
+                                {
+                                    screen = 14;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/44QN21l5.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 15)
+                                {
+                                    screen = 16;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/11._Asameek_Elketeera.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 16)
+                                {
+                                    screen = 17;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/04_-_Hatro7.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 18)
+                                {
+                                    screen = 19;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/02.Tamenny_Alaik.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 19)
+                                {
+                                    screen = 20;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/01.Akheran.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 21)
+                                {
+                                    screen = 22;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/Albumaty.Com.Mariam.Amer.Mounib.Aamel.Eh.Fe.Hayatak.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 22)
+                                {
+                                    screen = 23;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/Albumaty.Com_karmn_slyman__lyna_rkst.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 24)
+                                {
+                                    screen = 25;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/01_Banadeek_Taala.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 25)
+                                {
+                                    screen = 26;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/09.Betkhaby_Leh.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+
                             }
                             if (isPlaying == true && id74 < 0.2 && f2 == 0)
                             {
-                                if (index > 0)
+                                StopAudio2();
+                                //if (screen == 9)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/03._Enta_Eh.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 10)
                                 {
-                                    StopAudio2();
-                                    index--;
-                                    Thread thread1 = new Thread(() => AudioPlay(profileFolder, index));
+                                    screen = 9;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/03._Enta_Eh.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+
+                                }
+                                if (screen == 11)
+                                {
+                                    screen = 10;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list1/02_Al_Leila.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                //if (screen == 12)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/03.Ashouf Feek Youm.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 13)
+                                {
+                                    screen = 12;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/03.Ashouf Feek Youm.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 14)
+                                {
+                                    screen = 13;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list2/01.Bahebik_Wuachtini.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                //if (screen == 15)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/04.Lemeen_Ha3ish.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 16)
+                                {
+                                    screen = 15;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/04.Lemeen_Ha3ish.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 17)
+                                {
+                                    screen = 16;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 1/list3/11._Asameek_Elketeera.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                //if (screen == 18)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/04._Ana_Mosh_Anany.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 19)
+                                {
+                                    screen = 18;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/04._Ana_Mosh_Anany.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 20)
+                                {
+                                    screen = 19;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list1/02.Tamenny_Alaik.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                //if (screen == 21)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/03.Ana_Fil_gharam.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 22)
+                                {
+                                    screen = 21;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/03.Ana_Fil_gharam.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 23)
+                                {
+                                    screen = 22;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list2/Albumaty.Com.Mariam.Amer.Mounib.Aamel.Eh.Fe.Hayatak.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                //if (screen == 24)
+                                //{
+                                //    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/02.Monaya.mp3"));
+                                //    thread1.Start();
+                                //    isPlaying = true;
+                                //    f = 1;
+                                //    f2 = 1;
+                                //}
+                                if (screen == 25)
+                                {
+                                    screen = 24;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/02.Monaya.mp3"));
+                                    thread1.Start();
+                                    isPlaying = true;
+                                    f = 1;
+                                    f2 = 1;
+                                }
+                                if (screen == 26)
+                                {
+                                    screen = 25;
+                                    Thread thread1 = new Thread(() => AudioPlay("Profile 2/list3/01_Banadeek_Taala.mp3"));
                                     thread1.Start();
                                     isPlaying = true;
                                     f = 1;
@@ -1303,44 +1668,46 @@ public class TuioDemo : Form, TuioListener
             Console.WriteLine("No audio is playing.");
         }
     }
-    private void AudioPlay(string profileFolder, int index_User)
+    //private void AudioPlay(string profileFolder, int index_User)
+    private void AudioPlay(string x)
     {
-        if (Directory.Exists(profileFolder))
+
+        //if (Directory.Exists(profileFolder))
+        //{
+        //audioFiles2 = Directory.GetFiles(profileFolder, "*.mp3");
+        string audioFilePath = x;
+        flag_LastMusic = audioFilePath;
+        string audioFileName = Path.GetFileName(audioFilePath);
+        Console.WriteLine("Playing audio file: " + audioFileName);
+
+        using (var audioFile = new AudioFileReader(audioFilePath))
+        using (outputDevice = new WaveOutEvent())
         {
-            audioFiles2 = Directory.GetFiles(profileFolder, "*.mp3");
+            outputDevice.Init(audioFile);
+            outputDevice.Play();
 
-            if (index_User >= 0 && index_User < audioFiles2.Length)
+            while (outputDevice.PlaybackState == PlaybackState.Playing || f == 1)
             {
-
-                string audioFilePath = audioFiles2[index_User];
-                flag_LastMusic = audioFilePath;
-                string audioFileName = Path.GetFileName(audioFilePath);
-                Console.WriteLine("Playing audio file: " + audioFileName);
-
-                using (var audioFile = new AudioFileReader(audioFilePath))
-                using (outputDevice = new WaveOutEvent())
-                {
-                    outputDevice.Init(audioFile);
-                    outputDevice.Play();
-
-                    while (outputDevice.PlaybackState == PlaybackState.Playing || f == 1)
-                    {
-                        System.Threading.Thread.Sleep(100);
-                    }
-                    isPlaying = false;
-                    f = 0;
-                }
+                System.Threading.Thread.Sleep(100);
             }
-            else
-            {
+            isPlaying = false;
+            f = 0;
+        }
 
-                Console.WriteLine("Invalid index. No audio file found at index: " + index_User);
-            }
-        }
-        else
-        {
-            Console.WriteLine("Directory does not exist.");
-        }
+        //if (index_User >= 0 && index_User < audioFiles2.Length)
+        //    {
+        //    }
+        //    else
+        //    {
+
+        //        Console.WriteLine("Invalid index. No audio file found at index: " + index_User);
+        //    }
+        //}
+        //else
+        //{
+        //    Console.WriteLine("Directory does not exist.");
+        //}
+
     }
     private void PlayProfileAudio(long SymbolID)
     {
