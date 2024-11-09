@@ -4,14 +4,17 @@ from deepface import DeepFace
 import json
 import os
 import numpy as np
-db_path = './Images/'
-# Output JSON file for embeddings
-embedding_file = 'embeddings.json'
 
-# Initialize an empty list to store embeddings and identities
+#                  sssssssssss                        Kol da momken yetmeseh bas ashan bey add fe json file elly lesa ma3maltohosh
+
+#kkkkkkkkkkkkkkkkkkkkkk                             mm Awel Hena
+
+
+db_path = './Images/'
+embedding_file = 'embeddings.json'
 embeddings = []
 
-# Loop through each image file in the database directory
+
 for filename in os.listdir(db_path):
     #print(filename)
     if os.path.isdir(os.path.join(db_path, filename)):
@@ -20,18 +23,18 @@ for filename in os.listdir(db_path):
             print(img)
             if img.endswith('.jpg') or img.endswith('.png'):
                 filepath = os.path.join(db_path, filename, img)
-            # Compute the embedding for each image
+          
                 try:
                     embedding = DeepFace.represent(img_path=filepath, model_name='VGG-Face', enforce_detection=False)
-                    if embedding:  # Check if embedding was successfully computed
+                    if embedding:  
                         embeddings.append({
-                        'identity': filename,  # Store just the filename as the identity
-                        'embedding': embedding[0]['embedding']  # Save the embedding vector
+                        'identity': filename,  
+                        'embedding': embedding[0]['embedding']  
                         })
                 except Exception as e:
                     print(f"Could not process {filename}: {e}")
 
-# Write the embeddings to a JSON file
+
 with open(embedding_file, 'w') as f:
     json.dump(embeddings, f)
 
@@ -39,9 +42,8 @@ print(f"Embeddings successfully saved to {embedding_file}")
 
 with open('embeddings.json', 'r') as f:
     saved_embeddings = json.load(f)
-
-
-
+    
+#sssssssssssssssssss                              Lehad Hena
 attendance = []
 
 cap = cv2.VideoCapture(0)
